@@ -9,8 +9,7 @@ Hệ thống bóc tách hóa đơn / bảng điểm thông minh trên AWS - serv
 ## Tài liệu làm việc
 
 - [Theo dõi tiến độ](PROGRESS.md)
-- [Kế hoạch tổng thể](output.md)
-- [Phân rã task chi tiết](task-breakdown.md)
+- [Kế hoạch tổng thể](<đọc đi mấy tk bu đà.md>)
 
 ---
 
@@ -87,28 +86,28 @@ flowchart TD
 
 ## Công nghệ sử dụng
 
-| Lớp | Dịch vụ AWS |
-|---|---|
+| Lớp               | Dịch vụ AWS                                          |
+| ------------------ | ------------------------------------------------------ |
 | Frontend & Hosting | S3 Static Website, CloudFront, AWS Certificate Manager |
-| Auth & API | Cognito User Pool, API Gateway, IAM |
-| Ingestion | S3, Lambda, SQS, Dead Letter Queue |
-| Orchestration | Step Functions, SNS |
-| AI / OCR | Amazon Textract (Async API) |
-| Data | DynamoDB, S3 |
-| Notification | Amazon SES |
-| DevOps | Terraform, GitHub Actions, CloudWatch, X-Ray |
+| Auth & API         | Cognito User Pool, API Gateway, IAM                    |
+| Ingestion          | S3, Lambda, SQS, Dead Letter Queue                     |
+| Orchestration      | Step Functions, SNS                                    |
+| AI / OCR           | Amazon Textract (Async API)                            |
+| Data               | DynamoDB, S3                                           |
+| Notification       | Amazon SES                                             |
+| DevOps             | Terraform, GitHub Actions, CloudWatch, X-Ray           |
 
 ---
 
 ## Phân công nhiệm vụ
 
-| Thành viên | Vai trò | Phụ trách chính |
-|---|---|---|
-| Thành viên 1 | Frontend & Auth | S3 Static Hosting, CloudFront, Cognito, Lambda sinh presigned URL, IAM/CORS, IaC phần frontend |
-| Thành viên 2 | Ingestion & Queue | S3 Event, Lambda Validate, SQS, Dead Letter Queue, cơ chế retry |
-| Thành viên 3 | Core OCR / AI | Textract async API, SNS callback, Lambda Parse, xử lý JSON kết quả |
-| Thành viên 4 | Data & Orchestration | Step Functions state machine, DynamoDB schema + GSI, S3 Processed, SES |
-| Thành viên 5 | DevOps & Infra | Terraform/CDK toàn bộ hạ tầng, GitHub Actions CI/CD, CloudWatch Alarms, X-Ray |
+| Thành viên   | Vai trò             | Phụ trách chính                                                                              |
+| -------------- | -------------------- | ----------------------------------------------------------------------------------------------- |
+| Thành viên 1 | Frontend & Auth      | S3 Static Hosting, CloudFront, Cognito, Lambda sinh presigned URL, IAM/CORS, IaC phần frontend |
+| Thành viên 2 | Ingestion & Queue    | S3 Event, Lambda Validate, SQS, Dead Letter Queue, cơ chế retry                               |
+| Thành viên 3 | Core OCR / AI        | Textract async API, SNS callback, Lambda Parse, xử lý JSON kết quả                          |
+| Thành viên 4 | Data & Orchestration | Step Functions state machine, DynamoDB schema + GSI, S3 Processed, SES                          |
+| Thành viên 5 | DevOps & Infra       | Terraform/CDK toàn bộ hạ tầng, GitHub Actions CI/CD, CloudWatch Alarms, X-Ray               |
 
 ---
 
@@ -132,4 +131,3 @@ idp-aws-pipeline/
 │   └── data-model.md       # DynamoDB schema + cấu trúc JSON Textract
 └── README.md
 ```
-
