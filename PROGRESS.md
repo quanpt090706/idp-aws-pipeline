@@ -54,7 +54,16 @@ Phụ trách: Nhóm trưởng điều phối, cả nhóm duyệt.
 - [ ] Chốt message mà TV2 bàn giao cho TV4.
 - [ ] Chuẩn bị bộ test đã ẩn danh: tối thiểu 10 hóa đơn + 10 bảng điểm.
 
-Hoàn thành giai đoạn khi: TV1 có thể làm giao diện giả, TV2 có thể tạo message, TV3 có thể viết parser và TV4 có thể thiết kế database từ cùng một contract.
+### Điều kiện để chuyển sang Giai đoạn 1
+
+Không yêu cầu TV1–TV4 phải code xong. Chỉ xác nhận rằng các quy ước đã đủ rõ để mỗi người bắt đầu làm phần của mình mà không hiểu khác nhau.
+
+- [ ] TV1 xác nhận đã hiểu dữ liệu website sẽ gửi và nhận.
+- [ ] TV2 xác nhận đã hiểu cấu trúc message bàn giao cho TV4.
+- [ ] TV3 xác nhận đã hiểu kết quả mà hai parser phải tạo ra.
+- [ ] TV4 xác nhận đã hiểu dữ liệu cần lưu và các trạng thái.
+- [ ] TV5 xác nhận đã biết các tài nguyên AWS cần tạo.
+- [ ] Cả nhóm duyệt data contract, API contract và message contract.
 
 ---
 
@@ -120,7 +129,13 @@ Hoàn thành giai đoạn khi: TV1 có thể làm giao diện giả, TV2 có th�
 - [ ] Thiết kế retry, timeout và failure path.
 - [ ] Tạo state machine bằng các Lambda giả.
 
-Hoàn thành giai đoạn khi: hạ tầng `dev` tối thiểu đã có; frontend hiển thị được mock data; validation, parser và state machine skeleton có test cơ bản.
+### Điều kiện để chuyển sang Giai đoạn 2
+
+- [ ] TV5 đã bàn giao hạ tầng `dev` tối thiểu.
+- [ ] TV1 hiển thị được mock invoice và transcript.
+- [ ] TV2 có validation skeleton và unit test cơ bản.
+- [ ] TV3 có hai parser skeleton chạy được trên fixture.
+- [ ] TV4 có state machine skeleton chạy được với kết quả giả.
 
 ---
 
@@ -147,11 +162,16 @@ Bàn giao cho TV4:
 - [ ] Có input mà Step Functions nhận được.
 - [ ] Có PR, cách test và bằng chứng log.
 
-Hoàn thành giai đoạn khi:
+### Điều kiện để chuyển sang Giai đoạn 3
+
+- [ ] File hợp lệ đi hết luồng sau:
 
 ```text
 Upload file → S3 → Validate → SQS → Workflow Starter
 ```
+
+- [ ] File không hợp lệ bị `REJECTED` và không đi vào Textract.
+- [ ] TV4 xác nhận đã nhận được input đúng contract từ TV2.
 
 ---
 
@@ -170,12 +190,17 @@ Phụ trách chính: TV4. Hỗ trợ: TV3 và TV5.
 - [ ] Tạo persistence adapter cập nhật DynamoDB.
 - [ ] Kiểm tra state machine bằng Lambda/kết quả giả.
 
-Hoàn thành giai đoạn khi:
+### Điều kiện để chuyển sang Giai đoạn 4
+
+- [ ] Luồng giả lập sau chạy được:
 
 ```text
 SQS message → Step Functions → PROCESSING
 → kết quả giả → SUCCEEDED/FAILED
 ```
+
+- [ ] Retry, timeout và Catch path đã được test bằng lỗi giả.
+- [ ] TV3 nhận được input và callback contract cần cho Textract.
 
 ---
 
@@ -252,13 +277,17 @@ Phụ trách chính: TV1. Hỗ trợ hạ tầng: TV5. Hỗ trợ dữ liệu: T
 - [ ] Frontend bucket không public.
 - [ ] CORS chỉ cho phép origin cần thiết.
 
-Hoàn thành giai đoạn khi:
+### Điều kiện để chuyển sang Giai đoạn 7
+
+- [ ] Luồng người dùng sau chạy được:
 
 ```text
 Đăng nhập → Upload → Processing → Xem kết quả
 ```
 
-hoạt động cho cả hóa đơn và bảng điểm.
+- [ ] Luồng trên hoạt động cho hóa đơn.
+- [ ] Luồng trên hoạt động cho bảng điểm.
+- [ ] TV5 nhận bàn giao danh sách log, metric và alarm cần hoàn thiện.
 
 ---
 

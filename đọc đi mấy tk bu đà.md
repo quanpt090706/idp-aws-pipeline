@@ -105,7 +105,6 @@ const mockInvoice = {
 };
 ```
 
-
 ## TV2 viết chương trình kiểm tra file
 
 TV2 làm theo thứ tự:
@@ -307,7 +306,7 @@ Kết quả TV3 bàn giao cho TV4:
 
 # Bước 5 – TV4 lưu kết quả thật
 
-Khi TV3 đã trả dữ liệu thật, TV4 thay dữ liệu giả bằng dữ liệu thật.
+Khi TV3 đã trả dữ liệu th	ật, TV4 thay dữ liệu giả bằng dữ liệu thật.
 
 Thứ tự:
 
