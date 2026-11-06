@@ -6,6 +6,14 @@ Hệ thống bóc tách hóa đơn / bảng điểm thông minh trên AWS - serv
 
 ---
 
+## Tài liệu làm việc
+
+- [Theo dõi tiến độ](PROGRESS.md)
+- [Kế hoạch tổng thể](output.md)
+- [Phân rã task chi tiết](task-breakdown.md)
+
+---
+
 ## Mô tả
 
 Pipeline tự động nhận diện và trích xuất dữ liệu có cấu trúc từ file hóa đơn / bảng điểm scan (PDF, JPG, PNG), sử dụng **Amazon Textract** và kiến trúc serverless event-driven trên AWS.
