@@ -11,6 +11,7 @@ Mô tả chi tiết luồng từ khi message ra khỏi SQS đến khi kết qu�
 ```mermaid
 sequenceDiagram
     participant SQS as SQS Queue
+    participant Starter as Lambda – Workflow Starter
     participant SFN as Step Functions
     participant LambdaS as Lambda – Start Job
     participant Textract as Amazon Textract
@@ -21,7 +22,9 @@ sequenceDiagram
     participant SES as Amazon SES
     participant CW as CloudWatch
 
-    SQS->>SFN: Trigger state machine (s3_bucket, s3_key, user_id)
+    SQS->>Starter: Batch message contract TV2 1.0
+    Starter->>DDB: Đọc Documents, chờ QUEUED
+    Starter->>SFN: StartExecution với tên/input xác định
 
     Note over SFN,Textract: Bước 1 – Khởi động Textract job
     SFN->>LambdaS: Thực thi bước StartJob
@@ -64,8 +67,8 @@ sequenceDiagram
 
 | | Sync (`AnalyzeDocument`) | Async (`StartDocumentAnalysis`) |
 |---|---|---|
-| **Giới hạn trang** | Tối đa 1 trang | Không giới hạn |
-| **Kích thước file** | Tối đa 5 MB | Tối đa 500 MB |
+| **Giới hạn trang** | PDF/TIFF tối đa 1 trang | PDF/TIFF tối đa 3.000 trang |
+| **Kích thước file** | Tối đa 10 MB | JPEG/PNG 10 MB; PDF/TIFF 500 MB |
 | **Thời gian chờ** | Lambda phải chờ trong suốt quá trình | Lambda trả về ngay sau khi gửi job |
 | **Chi phí** | Trả per-page, block Lambda | Hiệu quả hơn cho file nhiều trang |
 | **Phù hợp** | Demo đơn giản, 1 trang | Production, file thực tế |
@@ -73,6 +76,10 @@ sequenceDiagram
 ---
 
 ## Vai trò của Step Functions
+
+TV2 áp dụng giới hạn demo 10 MiB cho PDF/JPG/PNG; giới hạn Textract tham khảo
+[tài liệu AWS](https://docs.aws.amazon.com/textract/latest/dg/limits-document.html).
+Luồng callback/parser do TV3/TV4 hiện thực; workflow mock TV2 không thực hiện các bước này.
 
 Step Functions giữ **trạng thái** của toàn bộ pipeline qua các bước:
 

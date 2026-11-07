@@ -19,6 +19,7 @@ sequenceDiagram
     participant S3Up as S3 Upload Bucket
     participant LambdaV as Lambda – Validate
     participant SQS as SQS Queue
+    participant DDB as DynamoDB Documents
 
     Note over User,S3Web: Bước 1 – Tải giao diện web
     User->>CF: Truy cập URL ứng dụng
@@ -34,6 +35,7 @@ sequenceDiagram
     User->>APIGW: POST /upload-url (JWT Token, tên file)
     APIGW->>Cognito: Verify JWT Token
     APIGW->>LambdaURL: Sinh presigned URL cho file này
+    LambdaURL->>DDB: Tạo UPLOAD_PENDING, PK=USER#user_id, SK=DOC#document_id
     LambdaURL-->>User: Presigned URL (hết hạn sau 15 phút)
 
     Note over User,S3Up: Bước 4 – Upload trực tiếp lên S3 (không qua server)
@@ -44,16 +46,23 @@ sequenceDiagram
     S3Up->>LambdaV: S3 Event (ObjectCreated)
     LambdaV->>LambdaV: Kiểm tra định dạng + kích thước file
     alt File hợp lệ
-        LambdaV->>SQS: Đẩy message (s3_bucket, s3_key, user_id)
+        LambdaV->>SQS: Đẩy message contract TV2 1.0
         SQS-->>LambdaV: Message ID xác nhận
+        LambdaV->>DDB: UPLOAD_PENDING → QUEUED có điều kiện
     else File không hợp lệ
-        LambdaV->>SQS: Đẩy vào Dead Letter Queue
+        LambdaV->>DDB: UPLOAD_PENDING → REJECTED + lý do
+        Note over LambdaV,SQS: Không enqueue file không hợp lệ
     end
 ```
 
 ---
 
 ## Giải thích các quyết định thiết kế
+
+Key upload: `uploads/{user_id}/{document_id}/{file_name}`.
+Workflow Starter kiểm tra Documents đã QUEUED trước StartExecution; nếu message đến trước cập nhật DDB,
+Starter retry riêng message đó. Lỗi hệ thống của Validate đi failure destination riêng sau async retry.
+Chi tiết [contract TV2](../tv2/CONTRACT.md) và [runbook](../tv2/README.md).
 
 | Quyết định | Lý do |
 |---|---|

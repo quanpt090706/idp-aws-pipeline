@@ -1,0 +1,15 @@
+# Non-secret values from a running Academy lab. Never place credentials here.
+region              = ""
+expected_account_id = ""
+aws_profile         = "academy-lab"
+lambda_role_arn     = ""
+workflow_role_arn   = ""
+
+# To connect TV4's existing Standard workflow:
+# create_mock_workflow       = false
+# existing_state_machine_arn = "arn:aws:states:REGION:ACCOUNT:stateMachine:NAME"
+
+# Academy roles may not allow policy mutation.
+manage_iam_policies = false
+enable_processing   = false
+alarm_actions       = []

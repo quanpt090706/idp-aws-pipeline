@@ -2,11 +2,16 @@
 
 Mô tả cấu trúc dữ liệu trong hệ thống: DynamoDB table design và cấu trúc JSON Textract trả về.
 
+Các ví dụ metadata, số tiền/số lượng và response bên dưới là dữ liệu tự dựng để minh họa schema;
+không phải hóa đơn thật hoặc kết quả Textract đã được kiểm chứng trên AWS.
+
 ---
 
 ## DynamoDB Table Design
 
-Hệ thống dùng **1 bảng duy nhất** (single-table design) theo best practice của DynamoDB — thay vì tạo nhiều bảng như SQL.
+Bảng **Documents** lưu metadata/kết quả từng tài liệu theo PK/SK dưới đây.
+PROGRESS còn có bảng **JobCallbacks** do TV4 thiết kế riêng; phần TV2 chỉ truy cập Documents.
+Contract triển khai TV2 nằm ở [tv2/CONTRACT.md](tv2/CONTRACT.md), cần xác nhận khi ghép TV1/TV4.
 
 ### Cấu trúc Primary Key
 
@@ -20,13 +25,13 @@ Hệ thống dùng **1 bảng duy nhất** (single-table design) theo best pract
 ```
 {
   "PK":            "USER#abc123",
-  "SK":            "DOC#2024-01-15T08:30:00Z",
+  "SK":            "DOC#doc-uuid-xxxx",
   "document_id":   "doc-uuid-xxxx",
   "user_id":       "abc123",
   "file_name":     "hoa-don-vinamilk-01-2024.pdf",
-  "s3_key":        "uploads/abc123/hoa-don-vinamilk.pdf",
+  "s3_key":        "uploads/abc123/doc-uuid-xxxx/hoa-don-vinamilk-01-2024.pdf",
   "s3_result_key": "processed/abc123/hoa-don-vinamilk.json",
-  "status":        "SUCCEEDED",           ← PENDING | PROCESSING | SUCCEEDED | FAILED
+  "status":        "SUCCEEDED",           ← UPLOAD_PENDING | QUEUED | PROCESSING | SUCCEEDED | NEEDS_REVIEW | FAILED | REJECTED
   "document_type": "INVOICE",             ← INVOICE | TRANSCRIPT
   "created_at":    "2024-01-15T08:30:00Z",
   "updated_at":    "2024-01-15T08:31:45Z",
@@ -55,7 +60,7 @@ GSI cho phép query theo chiều khác ngoài PK/SK.
 
 | GSI | Partition Key | Sort Key | Mục đích |
 |---|---|---|---|
-| `GSI-status` | `status` | `created_at` | Lấy danh sách tất cả document đang PENDING hoặc FAILED |
+| `GSI-status` | `status` | `created_at` | Lấy danh sách document theo trạng thái (UPLOAD_PENDING/QUEUED/FAILED...) |
 | `GSI-type` | `document_type` | `created_at` | Lọc riêng hóa đơn hoặc bảng điểm |
 
 ---
@@ -77,7 +82,7 @@ Block types trong response:
     └── WORD      → Nội dung trong ô
 ```
 
-### Ví dụ response thực tế (rút gọn)
+### Ví dụ minh họa response (dữ liệu tự dựng, rút gọn)
 
 ```json
 {
@@ -156,4 +161,5 @@ erDiagram
     DOCUMENT ||--|| EXTRACTED_DATA : "has"
 ```
 
-> **Lưu ý:** Trên thực tế `USER`, `DOCUMENT`, `EXTRACTED_DATA` không phải 3 bảng riêng — tất cả nằm trong 1 DynamoDB table duy nhất, phân biệt nhau bằng `PK`/`SK`. Diagram trên chỉ để minh họa quan hệ logic giữa các entity.
+> Diagram minh họa quan hệ logic, không phải xác nhận có ba bảng vật lý.
+> TV2 dùng bảng Documents; thiết kế USER/EXTRACTED_DATA/JobCallbacks và GSI thuộc TV1/TV4.

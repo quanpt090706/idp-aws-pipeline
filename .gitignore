@@ -32,3 +32,12 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+
+# TV2 local verification and deploy artifacts
+build/
+.tools/
+.pytest_cache/
+.coverage
+htmlcov/
+tests/samples/
+*.tfplan

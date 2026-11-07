@@ -20,7 +20,7 @@ File này là bảng tiến độ chung của nhóm. Mỗi Pull Request hoàn th
 | Mã | Họ tên/GitHub | Vai trò             | Trạng thái hiện tại |
 | --- | --------------- | -------------------- | ----------------------- |
 | TV1 | Chưa điền    | Frontend & Auth      | Chưa bắt đầu        |
-| TV2 | Chưa điền    | Ingestion & Queue    | Chưa bắt đầu        |
+| TV2 | Chưa điền    | Ingestion & Queue    | Đã có mã/test local; chờ AWS Academy và PR/merge |
 | TV3 | Chưa điền    | Core OCR / AI        | Chưa bắt đầu        |
 | TV4 | Chưa điền    | Data & Orchestration | Chưa bắt đầu        |
 | TV5 | Chưa điền    | DevOps & Infra       | Chưa bắt đầu        |
@@ -42,8 +42,8 @@ File này là bảng tiến độ chung của nhóm. Mỗi Pull Request hoàn th
 
 Phụ trách: Nhóm trưởng điều phối, cả nhóm duyệt.
 
-- [X] Thống nhất thứ tự các giai đoạn.
-- [X] Thống nhất vai trò của TV1–TV5 theo `README.md`.
+- [ ] Thống nhất thứ tự các giai đoạn.
+- [ ] Thống nhất vai trò của TV1–TV5 theo `README.md`.
 - [ ] Chốt phạm vi bắt buộc của bản demo.
 - [ ] Chốt loại file, kích thước và số trang tối đa.
 - [ ] Chốt cấu trúc dữ liệu chung.
@@ -97,6 +97,9 @@ Không yêu cầu TV1–TV4 phải code xong. Chỉ xác nhận rằng các quy 
 - [ ] Frontend build thành công.
 
 ### TV2 — Viết phần kiểm tra file
+
+> Triển khai local và bằng chứng kiểm thử: [TV2 — trạng thái Bước 0–13](docs/tv2/IMPLEMENTATION_STATUS.md).
+> Giữ các ô `[ ]` cho đến khi đạt tiêu chí test + merge theo quy tắc ở mục 1.
 
 - [ ] Viết quy tắc chấp nhận/từ chối file.
 - [ ] Tạo S3 event mẫu.
