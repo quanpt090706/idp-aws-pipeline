@@ -6,6 +6,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "lambdas" / "validate"))
 sys.path.insert(0, str(ROOT / "lambdas" / "workflow-starter"))
+sys.path.insert(0, str(ROOT / "lambdas" / "mock-worker"))
 
 # Credential giả cho test; các test gọi SDK còn phải dùng mock_aws()
 os.environ.update(
