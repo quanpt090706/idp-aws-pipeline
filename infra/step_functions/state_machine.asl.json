@@ -1,0 +1,355 @@
+{
+  "Comment": "IDP Pipeline Orchestrator - Điều phối quy trình xử lý hóa đơn / bảng điểm",
+  "StartAt": "SetProcessingStatus",
+  "States": {
+    "SetProcessingStatus": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:updateItem",
+      "Comment": "Cập nhật có điều kiện trạng thái tài liệu sang PROCESSING (chấp nhận cả QUEUED lẫn PROCESSING để bảo đảm idempotency khi retry)",
+      "Parameters": {
+        "TableName": "${DOCUMENTS_TABLE_NAME}",
+        "Key": {
+          "PK": {
+            "S.$": "States.Format('USER#{}', $.user_id)"
+          },
+          "SK": {
+            "S.$": "States.Format('DOC#{}', $.document_id)"
+          }
+        },
+        "UpdateExpression": "SET #status = :processing, updated_at = :now, sfn_execution_id = :exec_id",
+        "ConditionExpression": "attribute_exists(PK) AND #status IN (:queued, :processing)",
+        "ExpressionAttributeNames": {
+          "#status": "status"
+        },
+        "ExpressionAttributeValues": {
+          ":queued": {
+            "S": "QUEUED"
+          },
+          ":processing": {
+            "S": "PROCESSING"
+          },
+          ":now": {
+            "S.$": "$$.State.EnteredTime"
+          },
+          ":exec_id": {
+            "S.$": "$$.Execution.Id"
+          }
+        }
+      },
+      "ResultPath": "$.set_processing_result",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "DynamoDB.InternalServerError",
+            "DynamoDB.RequestLimitExceeded",
+            "DynamoDB.ProvisionedThroughputExceededException"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error_info",
+          "Next": "HandleFailure"
+        }
+      ],
+      "Next": "RouteByDocumentType"
+    },
+
+    "RouteByDocumentType": {
+      "Type": "Choice",
+      "Comment": "Phân nhánh dựa trên loại tài liệu INVOICE (Hóa đơn) hoặc TRANSCRIPT (Bảng điểm)",
+      "Choices": [
+        {
+          "Variable": "$.document_type",
+          "StringEquals": "INVOICE",
+          "Next": "WaitForTextractInvoiceAnalysis"
+        },
+        {
+          "Variable": "$.document_type",
+          "StringEquals": "TRANSCRIPT",
+          "Next": "WaitForTextractTranscriptAnalysis"
+        }
+      ],
+      "Default": "HandleInvalidDocumentType"
+    },
+
+    "WaitForTextractInvoiceAnalysis": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
+      "Comment": "Kích hoạt Textract Expense Analysis qua Lambda StartJob và dừng State Machine chờ Task Token callback từ SNS/Lambda Parse",
+      "TimeoutSeconds": 900,
+      "Parameters": {
+        "FunctionName": "${START_JOB_LAMBDA_ARN}",
+        "Payload": {
+          "document_id.$": "$.document_id",
+          "user_id.$": "$.user_id",
+          "document_type.$": "$.document_type",
+          "bucket.$": "$.bucket",
+          "key.$": "$.key",
+          "attempt.$": "$.attempt",
+          "task_token.$": "$$.Task.Token"
+        }
+      },
+      "ResultPath": "$.ocr_result",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException",
+            "Textract.ThrottlingException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error_info",
+          "Next": "HandleFailure"
+        }
+      ],
+      "Next": "EvaluateExtractionResult"
+    },
+
+    "WaitForTextractTranscriptAnalysis": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
+      "Comment": "Kích hoạt Textract Document Analysis (Tables/Forms) qua Lambda StartJob và dừng State Machine chờ Task Token callback",
+      "TimeoutSeconds": 900,
+      "Parameters": {
+        "FunctionName": "${START_JOB_LAMBDA_ARN}",
+        "Payload": {
+          "document_id.$": "$.document_id",
+          "user_id.$": "$.user_id",
+          "document_type.$": "$.document_type",
+          "bucket.$": "$.bucket",
+          "key.$": "$.key",
+          "attempt.$": "$.attempt",
+          "task_token.$": "$$.Task.Token"
+        }
+      },
+      "ResultPath": "$.ocr_result",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException",
+            "Textract.ThrottlingException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error_info",
+          "Next": "HandleFailure"
+        }
+      ],
+      "Next": "EvaluateExtractionResult"
+    },
+
+    "EvaluateExtractionResult": {
+      "Type": "Choice",
+      "Comment": "Đánh giá chất lượng trích xuất từ Lambda Parse để phân loại SUCCEEDED hoặc NEEDS_REVIEW",
+      "Choices": [
+        {
+          "Variable": "$.ocr_result.status",
+          "StringEquals": "SUCCEEDED",
+          "Next": "UpdateStatusSucceeded"
+        },
+        {
+          "Variable": "$.ocr_result.status",
+          "StringEquals": "NEEDS_REVIEW",
+          "Next": "UpdateStatusNeedsReview"
+        }
+      ],
+      "Default": "HandleFailure"
+    },
+
+    "UpdateStatusSucceeded": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:updateItem",
+      "Comment": "Ghi nhận kết quả bóc tách trọn vẹn và cập nhật trạng thái SUCCEEDED",
+      "Parameters": {
+        "TableName": "${DOCUMENTS_TABLE_NAME}",
+        "Key": {
+          "PK": {
+            "S.$": "States.Format('USER#{}', $.user_id)"
+          },
+          "SK": {
+            "S.$": "States.Format('DOC#{}', $.document_id)"
+          }
+        },
+        "UpdateExpression": "SET #status = :succeeded, s3_result_key = :result_key, extracted = :extracted, confidence = :confidence, updated_at = :now",
+        "ExpressionAttributeNames": {
+          "#status": "status"
+        },
+        "ExpressionAttributeValues": {
+          ":succeeded": {
+            "S": "SUCCEEDED"
+          },
+          ":result_key": {
+            "S.$": "$.ocr_result.s3_result_key"
+          },
+          ":extracted": {
+            "S.$": "States.JsonToString($.ocr_result.extracted)"
+          },
+          ":confidence": {
+            "N.$": "States.Format('{}', $.ocr_result.confidence)"
+          },
+          ":now": {
+            "S.$": "$$.State.EnteredTime"
+          }
+        }
+      },
+      "ResultPath": "$.db_final_update",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "DynamoDB.InternalServerError",
+            "DynamoDB.RequestLimitExceeded",
+            "DynamoDB.ProvisionedThroughputExceededException"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Next": "SendCompletionNotification"
+    },
+
+    "UpdateStatusNeedsReview": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:updateItem",
+      "Comment": "Ghi nhận kết quả trích xuất thiếu trường/low confidence và gắn cờ NEEDS_REVIEW",
+      "Parameters": {
+        "TableName": "${DOCUMENTS_TABLE_NAME}",
+        "Key": {
+          "PK": {
+            "S.$": "States.Format('USER#{}', $.user_id)"
+          },
+          "SK": {
+            "S.$": "States.Format('DOC#{}', $.document_id)"
+          }
+        },
+        "UpdateExpression": "SET #status = :needs_review, s3_result_key = :result_key, extracted = :extracted, warnings = :warnings, confidence = :confidence, updated_at = :now",
+        "ExpressionAttributeNames": {
+          "#status": "status"
+        },
+        "ExpressionAttributeValues": {
+          ":needs_review": {
+            "S": "NEEDS_REVIEW"
+          },
+          ":result_key": {
+            "S.$": "$.ocr_result.s3_result_key"
+          },
+          ":extracted": {
+            "S.$": "States.JsonToString($.ocr_result.extracted)"
+          },
+          ":warnings": {
+            "S.$": "States.JsonToString($.ocr_result.warnings)"
+          },
+          ":confidence": {
+            "N.$": "States.Format('{}', $.ocr_result.confidence)"
+          },
+          ":now": {
+            "S.$": "$$.State.EnteredTime"
+          }
+        }
+      },
+      "ResultPath": "$.db_final_update",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "DynamoDB.InternalServerError",
+            "DynamoDB.RequestLimitExceeded",
+            "DynamoDB.ProvisionedThroughputExceededException"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Next": "SendCompletionNotification"
+    },
+
+    "SendCompletionNotification": {
+      "Type": "Pass",
+      "Comment": "Placeholder thông báo hoàn tất (có thể mở rộng gọi SES/SNS)",
+      "Next": "WorkflowSucceeded"
+    },
+
+    "WorkflowSucceeded": {
+      "Type": "Succeed"
+    },
+
+    "HandleInvalidDocumentType": {
+      "Type": "Pass",
+      "Parameters": {
+        "error_type": "INVALID_DOCUMENT_TYPE",
+        "message": "Loại tài liệu không được hỗ trợ (chỉ chấp nhận INVOICE hoặc TRANSCRIPT)"
+      },
+      "ResultPath": "$.error_info",
+      "Next": "HandleFailure"
+    },
+
+    "HandleFailure": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:updateItem",
+      "Comment": "Ghi nhận lỗi hệ thống và cập nhật trạng thái FAILED",
+      "Parameters": {
+        "TableName": "${DOCUMENTS_TABLE_NAME}",
+        "Key": {
+          "PK": {
+            "S.$": "States.Format('USER#{}', $.user_id)"
+          },
+          "SK": {
+            "S.$": "States.Format('DOC#{}', $.document_id)"
+          }
+        },
+        "UpdateExpression": "SET #status = :failed, error_reason = :error_reason, updated_at = :now",
+        "ExpressionAttributeNames": {
+          "#status": "status"
+        },
+        "ExpressionAttributeValues": {
+          ":failed": {
+            "S": "FAILED"
+          },
+          ":error_reason": {
+            "S.$": "States.JsonToString($.error_info)"
+          },
+          ":now": {
+            "S.$": "$$.State.EnteredTime"
+          }
+        }
+      },
+      "ResultPath": "$.db_failure_update",
+      "Next": "WorkflowFailed"
+    },
+
+    "WorkflowFailed": {
+      "Type": "Fail",
+      "Cause": "Pipeline execution failed or timed out",
+      "Error": "PipelineExecutionError"
+    }
+  }
+}
