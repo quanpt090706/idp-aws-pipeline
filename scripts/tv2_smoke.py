@@ -51,7 +51,13 @@ def run(config, session, sample_dir, timeout):
         ("mismatch.pdf", b"\x89PNG\r\n\x1a\nsynthetic", "CONTENT_MISMATCH"),
         ("oversize.pdf", b"%PDF-" + bytes(10 * 1024 * 1024), "FILE_TOO_LARGE"),
     ]
-    manifest = {"run_id": run_id, "user_id": user, "scope": "tv2_ingestion", "ocr_verified": False, "cases": []}
+    manifest = {
+        "run_id": run_id, "user_id": user, "scope": "tv2_ingestion", "ocr_verified": False, "cases": [],
+        "observation": {
+            "scope": "bounded_polling_after_uploads", "requested_seconds": timeout,
+            "elapsed_seconds": None, "complete": False, "permanent_absence_proven": False,
+        },
+    }
     expected_inputs = {}
     output = ROOT / "build" / "tv2"
     output.mkdir(parents=True, exist_ok=True)
@@ -79,8 +85,10 @@ def run(config, session, sample_dir, timeout):
                     "demo.jpg": "image/jpeg", "demo.png": "image/png"}[filename],
                 "size_bytes": len(body), "etag": uploaded["ETag"].strip('"'), "attempt": 1,
             }
-    deadline = time.monotonic() + timeout
-    while time.monotonic() < deadline:
+    observation_started = time.monotonic()
+    deadline = observation_started + timeout
+    while True:
+        poll_started = time.monotonic()
         for case in manifest["cases"]:
             item = ddb.get_item(Key={"PK": f"USER#{user}", "SK": f'DOC#{case["document_id"]}'}, ConsistentRead=True).get("Item", {})
             case["status"] = item.get("status")
@@ -89,7 +97,10 @@ def run(config, session, sample_dir, timeout):
                 "user_id": user, "document_id": case["document_id"], "attempt": 1,
             }))
             if expected:
-                case["passed"] = item.get("status") == "REJECTED" and item.get("reject_reason") == expected
+                if item.get("status") == "REJECTED" and item.get("reject_reason") != expected:
+                    case["reject_reason_mismatch"] = True
+                case["passed"] = (item.get("status") == "REJECTED" and item.get("reject_reason") == expected
+                                  and not case.get("reject_reason_mismatch") and not case.get("unexpected_execution"))
                 try:
                     sfn.describe_execution(executionArn=arn)
                     case["passed"] = False
@@ -105,16 +116,21 @@ def run(config, session, sample_dir, timeout):
                         payload = json.loads(execution["input"])
                     except json.JSONDecodeError:
                         payload = None
-                    case["input_mismatch_fields"] = input_mismatches(payload, expected_inputs[case["document_id"]])
+                    mismatches = input_mismatches(payload, expected_inputs[case["document_id"]])
+                    case["input_mismatch_fields"] = sorted(set(case.get("input_mismatch_fields", [])) | set(mismatches))
                     case["passed"] = (item.get("status") in {"QUEUED", "PROCESSING", "SUCCEEDED", "NEEDS_REVIEW", "FAILED"}
                                       and not case["input_mismatch_fields"])
                 except ClientError as error:
                     if error.response["Error"]["Code"] != "ExecutionDoesNotExist":
                         raise
                     case["passed"] = False
-        if all(case.get("passed") for case in manifest["cases"]):
+        # Finish a full scan begun at/after the deadline, even if an earlier scan was slow.
+        elapsed = time.monotonic() - observation_started
+        if poll_started >= deadline:
             break
-        time.sleep(2)
+        if elapsed < timeout:
+            time.sleep(min(2, timeout - elapsed))
+    manifest["observation"].update(elapsed_seconds=round(elapsed, 3), complete=True)
     report_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
     print(f"Evidence saved: {report_path.relative_to(ROOT)}")
     return all(case.get("passed") for case in manifest["cases"])
@@ -125,7 +141,8 @@ def main():
     parser.add_argument("--config", required=True)
     parser.add_argument("--samples", required=True)
     parser.add_argument("--profile", default="academy-lab")
-    parser.add_argument("--timeout", type=int, default=180)
+    parser.add_argument("--timeout", type=int, default=180,
+                        help="Observation window after uploads (default: 180 seconds), ending with a full scan; absence is bounded.")
     parser.add_argument("--confirm-dev-write", action="store_true")
     args = parser.parse_args()
     if not args.confirm_dev_write:

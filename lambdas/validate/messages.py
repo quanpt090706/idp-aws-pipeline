@@ -43,4 +43,7 @@ def build_message(
 
 
 def to_json(message: dict) -> str:
-    return json.dumps(message, ensure_ascii=False, separators=(",", ":"))
+    body = json.dumps(message, ensure_ascii=False, separators=(",", ":"))
+    # S3 keys may contain these characters, but raw SQS bodies may not.
+    # JSON escaping preserves the exact key after the consumer decodes it.
+    return body.replace("\ufffe", "\\ufffe").replace("\uffff", "\\uffff")

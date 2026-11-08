@@ -2,13 +2,14 @@ data "aws_caller_identity" "current" {}
 data "aws_partition" "current" {}
 
 locals {
-  account_id             = data.aws_caller_identity.current.account_id
-  partition              = data.aws_partition.current.partition
-  table_arn              = "arn:${local.partition}:dynamodb:${var.region}:${local.account_id}:table/${var.documents_table_name}"
-  bucket_arn             = "arn:${local.partition}:s3:::${var.upload_bucket_name}"
-  execution_arn          = "arn:${local.partition}:states:${var.region}:${local.account_id}:execution:${split(":", var.state_machine_arn)[6]}:*"
-  role_name              = element(reverse(split("/", var.lambda_role_arn)), 0)
-  state_machine_base_arn = join(":", slice(split(":", var.state_machine_arn), 0, 7))
+  account_id              = data.aws_caller_identity.current.account_id
+  partition               = data.aws_partition.current.partition
+  table_arn               = "arn:${local.partition}:dynamodb:${var.region}:${local.account_id}:table/${var.documents_table_name}"
+  bucket_arn              = "arn:${local.partition}:s3:::${var.upload_bucket_name}"
+  execution_arn           = "arn:${local.partition}:states:${var.region}:${local.account_id}:execution:${split(":", var.state_machine_arn)[6]}:*"
+  role_name               = element(reverse(split("/", var.lambda_role_arn)), 0)
+  state_machine_base_arn  = join(":", slice(split(":", var.state_machine_arn), 0, 7))
+  state_machine_qualifier = try(split(":", var.state_machine_arn)[7], null)
 }
 
 resource "aws_sqs_queue" "processing_dlq" {
@@ -55,7 +56,16 @@ resource "aws_iam_role_policy" "tv2" {
       { Effect = "Allow", Action = ["dynamodb:GetItem", "dynamodb:UpdateItem"], Resource = [local.table_arn] },
       { Effect = "Allow", Action = ["sqs:SendMessage"], Resource = [aws_sqs_queue.processing.arn, aws_sqs_queue.validate_failures.arn] },
       { Effect = "Allow", Action = ["sqs:ReceiveMessage", "sqs:DeleteMessage", "sqs:GetQueueAttributes"], Resource = [aws_sqs_queue.processing.arn] },
-      { Effect = "Allow", Action = ["states:StartExecution"], Resource = [var.state_machine_arn] },
+      merge(
+        { Effect = "Allow", Action = ["states:StartExecution"], Resource = [local.state_machine_base_arn] },
+        local.state_machine_qualifier == null ? {} : {
+          Condition = {
+            "ForAnyValue:StringEquals" = {
+              "states:StateMachineQualifier" = [local.state_machine_qualifier]
+            }
+          }
+        }
+      ),
       { Effect = "Allow", Action = ["states:DescribeExecution"], Resource = [local.execution_arn] },
       { Effect = "Allow", Action = ["logs:CreateLogStream", "logs:PutLogEvents"], Resource = [
         "${aws_cloudwatch_log_group.validate.arn}:*",

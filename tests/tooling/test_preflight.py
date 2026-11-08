@@ -162,3 +162,47 @@ def test_default_or_explicit_demo_size_limit_passes(environment, value):
         env["MAX_FILE_SIZE_BYTES"] = value
     results = preflight.check_environment(cfg, session)
     assert all(check["passed"] for check in results), results
+
+
+@pytest.mark.parametrize("visibility,passed", [(180, False), (479, False), (480, True), (481, True)])
+def test_visibility_includes_enabled_mapping_batch_window(environment, visibility, passed):
+    cfg, session, clients = environment
+    processing = clients["sqs"].get_queue_attributes(QueueUrl="processing")["Attributes"]
+    processing["VisibilityTimeout"] = str(visibility)
+    mapping = clients["lambda"].list_event_source_mappings.return_value["EventSourceMappings"][0]
+    mapping["MaximumBatchingWindowInSeconds"] = 300
+    results = {check["check"]: check["passed"] for check in preflight.check_environment(cfg, session)}
+    assert results["visibility_timeout"] is passed
+    assert results["sqs_mapping"] is True
+    clients["lambda"].list_event_source_mappings.assert_called_once_with(
+        FunctionName="starter", EventSourceArn=processing["QueueArn"])
+
+
+def test_disabled_mapping_window_does_not_increase_required_visibility(environment):
+    cfg, session, clients = environment
+    clients["lambda"].list_event_source_mappings.return_value["EventSourceMappings"].append({
+        "State": "Disabled", "FunctionResponseTypes": ["ReportBatchItemFailures"],
+        "MaximumBatchingWindowInSeconds": 300,
+    })
+    results = preflight.check_environment(cfg, session)
+    assert all(check["passed"] for check in results), results
+
+
+def test_every_enabled_mapping_window_counts_even_without_partial_batch(environment):
+    cfg, session, clients = environment
+    clients["lambda"].list_event_source_mappings.return_value["EventSourceMappings"].append({
+        "State": "Enabled", "MaximumBatchingWindowInSeconds": 300,
+    })
+    results = {check["check"]: check["passed"] for check in preflight.check_environment(cfg, session)}
+    assert results["sqs_mapping"] is False
+    assert results["visibility_timeout"] is False
+
+
+@pytest.mark.parametrize("mappings", [[], [
+    {"State": "Disabled", "FunctionResponseTypes": ["ReportBatchItemFailures"]},
+]])
+def test_mapping_check_requires_at_least_one_enabled_mapping(environment, mappings):
+    cfg, session, clients = environment
+    clients["lambda"].list_event_source_mappings.return_value["EventSourceMappings"] = mappings
+    results = {check["check"]: check["passed"] for check in preflight.check_environment(cfg, session)}
+    assert results["sqs_mapping"] is False

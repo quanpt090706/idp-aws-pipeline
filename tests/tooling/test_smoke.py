@@ -76,14 +76,20 @@ def environment(tmp_path, monkeypatch):
     monkeypatch.setattr(smoke, "ROOT", tmp_path)
     state.preflight = MagicMock(return_value=[{"check": "synthetic", "passed": True}])
     monkeypatch.setattr(smoke, "check_environment", state.preflight)
-    clock = iter((0, 0, 2))  # One polling pass; no wall-clock sleeps or live AWS calls.
-    monkeypatch.setattr(smoke.time, "monotonic", lambda: next(clock))
-    monkeypatch.setattr(smoke.time, "sleep", lambda _: None)
+    state.clock = SimpleNamespace(now=0, sleeps=[])
+
+    def advance_clock(seconds):
+        state.clock.sleeps.append(seconds)
+        state.clock.now += seconds
+
+    # Only the fake sleeper advances time; never wait or call live AWS.
+    monkeypatch.setattr(smoke.time, "monotonic", lambda: state.clock.now)
+    monkeypatch.setattr(smoke.time, "sleep", advance_clock)
     return state
 
 
-def run_and_report(env):
-    passed = smoke.run(env.config, env.session, env.samples, timeout=1)
+def run_and_report(env, timeout=1):
+    passed = smoke.run(env.config, env.session, env.samples, timeout=timeout)
     report = json.loads(next((env.root / "build" / "tv2").glob("smoke-*.json")).read_text(encoding="utf-8"))
     return passed, report
 
@@ -193,3 +199,125 @@ def test_missing_samples_stop_before_aws_access(environment):
     environment.preflight.assert_not_called()
     environment.session.client.assert_not_called()
     environment.session.resource.assert_not_called()
+
+
+def test_normal_run_observes_full_bounded_window(environment):
+    passed, report = run_and_report(environment, timeout=5)
+    assert passed
+    assert environment.clock.now == 5
+    assert environment.clock.sleeps == [2, 2, 1]
+    assert environment.sfn.describe_execution.call_count == 7 * 4
+    assert report["observation"] == {
+        "scope": "bounded_polling_after_uploads", "requested_seconds": 5,
+        "elapsed_seconds": 5, "complete": True, "permanent_absence_proven": False,
+    }
+
+
+@pytest.mark.parametrize("visible_at", [2, 5])
+def test_delayed_rejected_execution_fails_after_initial_absence(environment, visible_at):
+    original = environment.sfn.describe_execution.side_effect
+
+    def eventually_visible(**kwargs):
+        environment.rejected_execution = environment.clock.now >= visible_at
+        return original(**kwargs)
+
+    environment.sfn.describe_execution.side_effect = eventually_visible
+    passed, report = run_and_report(environment, timeout=5)
+    assert passed is False
+    assert all(case["unexpected_execution"] for case in report["cases"] if case["expected_reject_reason"])
+    assert report["observation"]["complete"] is True
+
+
+def test_observed_unexpected_execution_cannot_be_erased_by_later_absence(environment):
+    original = environment.sfn.describe_execution.side_effect
+
+    def transient_visibility(**kwargs):
+        environment.rejected_execution = environment.clock.now == 0
+        return original(**kwargs)
+
+    environment.sfn.describe_execution.side_effect = transient_visibility
+    passed, report = run_and_report(environment, timeout=5)
+    assert passed is False
+    assert all(case["unexpected_execution"] and not case["passed"]
+               for case in report["cases"] if case["expected_reject_reason"])
+
+
+def test_observed_input_mismatch_is_sticky_and_sanitized(environment):
+    environment.mutate = lambda payload: ({**payload, "etag": "private-wrong-etag"}
+                                         if environment.clock.now == 0 else payload)
+    passed, report = run_and_report(environment, timeout=5)
+    assert passed is False
+    assert all(case["input_mismatch_fields"] == ["etag"] and not case["passed"]
+               for case in report["cases"] if not case["expected_reject_reason"])
+    assert "private-wrong-etag" not in json.dumps(report)
+
+
+def test_observed_reject_reason_mismatch_is_sticky_and_sanitized(environment):
+    original = environment.table.get_item.side_effect
+
+    def transient_reason(**kwargs):
+        result = original(**kwargs)
+        if result["Item"]["status"] == "REJECTED" and environment.clock.now == 0:
+            return {"Item": {**result["Item"], "reject_reason": "private-wrong-reason"}}
+        return result
+
+    environment.table.get_item.side_effect = transient_reason
+    passed, report = run_and_report(environment, timeout=5)
+    assert passed is False
+    assert all(case["reject_reason_mismatch"] and not case["passed"]
+               for case in report["cases"] if case["expected_reject_reason"])
+    assert "private-wrong-reason" not in json.dumps(report)
+
+
+def test_missing_valid_executions_still_fail_at_end_of_window(environment):
+    environment.sfn.describe_execution.side_effect = ClientError(
+        {"Error": {"Code": "ExecutionDoesNotExist"}}, "DescribeExecution")
+    passed, report = run_and_report(environment, timeout=5)
+    assert passed is False
+    assert all(not case["passed"] for case in report["cases"] if not case["expected_reject_reason"])
+    assert report["observation"]["complete"] is True
+
+
+def test_initially_pending_valid_executions_can_pass_later(environment):
+    original = environment.sfn.describe_execution.side_effect
+
+    def eventually_started(**kwargs):
+        if environment.clock.now == 0:
+            raise ClientError({"Error": {"Code": "ExecutionDoesNotExist"}}, "DescribeExecution")
+        return original(**kwargs)
+
+    environment.sfn.describe_execution.side_effect = eventually_started
+    assert run_and_report(environment, timeout=5)[0] is True
+
+
+@pytest.mark.parametrize("delayed_execution", [False, True])
+def test_slow_scan_requires_a_full_scan_starting_after_deadline(environment, delayed_execution):
+    original = environment.sfn.describe_execution.side_effect
+    filenames = ["demo.pdf", "demo.jpg", "demo.png", "unsupported.exe", "empty.pdf", "mismatch.pdf", "oversize.pdf"]
+    observed_at = {name: [] for name in filenames}
+    calls = 0
+
+    def slow_describe(**kwargs):
+        nonlocal calls
+        filename = filenames[calls % len(filenames)]
+        calls += 1
+        observed_at[filename].append(environment.clock.now)
+        environment.rejected_execution = (delayed_execution and filename == "unsupported.exe"
+                                          and environment.clock.now >= 4)
+        try:
+            return original(**kwargs)
+        finally:
+            environment.clock.now = round(environment.clock.now + 0.8, 1)
+
+    environment.sfn.describe_execution.side_effect = slow_describe
+    passed, report = run_and_report(environment, timeout=5)
+    assert passed is (not delayed_execution)
+    assert all(len(times) == 2 and times[-1] >= 5 for times in observed_at.values()), observed_at
+    assert observed_at["unsupported.exe"] == [2.4, 8.0]
+    assert environment.clock.sleeps == []
+    assert report["observation"]["requested_seconds"] == 5
+    assert report["observation"]["elapsed_seconds"] == 11.2
+    assert report["observation"]["complete"] is True
+    if delayed_execution:
+        unsupported = next(case for case in report["cases"] if case["s3_key"].endswith("/unsupported.exe"))
+        assert unsupported["unexpected_execution"] is True

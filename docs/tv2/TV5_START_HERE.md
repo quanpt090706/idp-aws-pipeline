@@ -1,5 +1,7 @@
 # TV2 + TV5 — bắt đầu chạy AWS thật
 
+Hiện nhóm ưu tiên local theo TV5: chỉ cần mục 1 để chạy test/build; các mục AWS để giai đoạn sau.
+
 Đã thống nhất: chạy trên máy TV5, dùng profile của TV5; hiện chưa có hạ tầng.
 Loại lab, account, region và quyền hiệu lực vẫn cần kiểm tra. Chưa chạy deploy hoặc smoke lên AWS.
 
@@ -97,6 +99,9 @@ Không lấy byte giả trong `tests/helpers.py` làm mẫu OCR.
 ```
 
 Smoke tạo dữ liệu thử, kiểm tra 7 ca và lưu báo cáo thật tại `build/tv2/smoke-<run_id>.json`.
+Script chờ hết cửa sổ `--timeout` sau upload (mặc định 180s), có vòng quét cuối tại/sau deadline
+và giữ lỗi đã thấy. `observation` ghi thời lượng thực tế; API chậm có thể làm vượt thời lượng yêu cầu.
+Kết quả không chứng minh vĩnh viễn không có execution, không phải số đo p95.
 Giữ report, thời gian/account/region, log đã ẩn danh, trạng thái Documents và execution tương ứng.
 Report chỉ chứng minh `tv2_ingestion`, luôn ghi `ocr_verified=false`; mock workflow không chứng minh Textract/parser.
 Các ca retry/DLQ/redrive, event lặp/đồng thời, alarm/SNS và luồng API TV1 vẫn phải test theo

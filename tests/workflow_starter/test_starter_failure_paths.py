@@ -7,6 +7,7 @@ from botocore.exceptions import ClientError
 import app
 import rules
 from helpers import make_sqs_record
+from s3_event import parse_s3_event, parse_upload_key
 from test_app import case
 
 
@@ -16,6 +17,16 @@ def test_handoff_fixtures_match_actual_workflow_input():
     payload = json.loads((fixtures / "step_functions_input.json").read_text(encoding="utf-8"))
     assert {key: message[key] for key in app.INPUT_FIELDS} == payload
     assert len(app.execution_name(message)) <= 80
+    event = json.loads((fixtures / "s3_event_pdf.json").read_text(encoding="utf-8"))
+    obj = parse_s3_event(event)[0]
+    upload_key = parse_upload_key(obj.key)
+    assert {
+        "user_id": upload_key.user_id, "document_id": upload_key.document_id,
+        "file_name": upload_key.file_name, "bucket": obj.bucket, "key": obj.key,
+        "size_bytes": obj.size, "etag": obj.etag,
+    } == {key: message[key] for key in (
+        "user_id", "document_id", "file_name", "bucket", "key", "size_bytes", "etag",
+    )}
 
 
 @pytest.mark.parametrize("file_name", [".pdf", "..PDF", ".jpg", ".JPEG", ".png", "...PNG"])
@@ -56,6 +67,26 @@ def test_conflicting_existing_execution_is_not_acked(case):
     deps.sfn.executions[name] = json.dumps({"different": "input"})
     with pytest.raises(RuntimeError, match="input"):
         app.process_message(json.dumps(msg), deps)
+
+
+@pytest.mark.parametrize("status", ["QUEUED", "PROCESSING", "SUCCEEDED"])
+@pytest.mark.parametrize("field,value", [
+    ("attempt", True), ("attempt", 1.0), ("size_bytes", 10.0),
+])
+def test_existing_execution_with_different_json_type_is_not_acked(case, status, field, value):
+    msg, deps = case
+    deps.table.item["status"] = status
+    payload = {key: msg[key] for key in app.INPUT_FIELDS}
+    deps.sfn.executions[app.execution_name(msg)] = json.dumps({**payload, field: value})
+    with pytest.raises(RuntimeError, match="input"):
+        app.process_message(json.dumps(msg), deps)
+
+
+def test_equivalent_existing_input_with_different_formatting_is_duplicate(case):
+    msg, deps = case
+    payload = {key: msg[key] for key in reversed(app.INPUT_FIELDS)}
+    deps.sfn.executions[app.execution_name(msg)] = json.dumps(payload, indent=2)
+    assert app.process_message(json.dumps(msg), deps) == "DUPLICATE"
 
 
 def test_terminal_document_verifies_existing_execution(case):

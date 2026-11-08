@@ -72,7 +72,6 @@ def check_environment(config, session):
     validate = lam.get_function_configuration(FunctionName=config["validate_function_name"])
     starter = lam.get_function_configuration(FunctionName=config["starter_function_name"])
     check("lambda_handlers", validate["Handler"] == "handler.lambda_handler" and starter["Handler"] == "app.lambda_handler")
-    check("visibility_timeout", int(processing["VisibilityTimeout"]) >= 6 * starter["Timeout"])
     expected_env = {
         "validate": {"DOCUMENTS_TABLE": config["documents_table"], "QUEUE_URL": config["processing_queue_url"],
                      "UPLOAD_BUCKET": config["upload_bucket"], "UPLOAD_PREFIX": "uploads/"},
@@ -92,10 +91,15 @@ def check_environment(config, session):
     mappings = lam.list_event_source_mappings(
         FunctionName=config["starter_function_name"], EventSourceArn=processing["QueueArn"]
     )["EventSourceMappings"]
-    check("sqs_mapping", any(
-        mapping["State"] == "Enabled" and "ReportBatchItemFailures" in mapping.get("FunctionResponseTypes", [])
-        for mapping in mappings
+    enabled_mappings = [mapping for mapping in mappings if mapping["State"] == "Enabled"]
+    check("sqs_mapping", bool(enabled_mappings) and all(
+        "ReportBatchItemFailures" in mapping.get("FunctionResponseTypes", [])
+        for mapping in enabled_mappings
     ))
+    # The API filters to this function/queue; disabled mappings do not consume it.
+    batch_window = max((mapping.get("MaximumBatchingWindowInSeconds", 0)
+                        for mapping in enabled_mappings), default=0)
+    check("visibility_timeout", int(processing["VisibilityTimeout"]) >= 6 * starter["Timeout"] + batch_window)
     notifications = s3.get_bucket_notification_configuration(Bucket=config["upload_bucket"])
     # Suffix filters would hide unsupported files instead of letting Validate reject them.
     check("s3_notification", any(

@@ -118,7 +118,11 @@ def verify_existing(deps: Dependencies, name: str, input_json: str) -> None:
     old = deps.sfn.describe_execution(
         executionArn=execution_arn(deps.state_machine_arn, name)
     )
-    if json.loads(old["input"]) != json.loads(input_json):
+    # Canonical JSON keeps true/1 and 1.0/1 distinct, unlike Python dict equality.
+    old_input = json.dumps(
+        json.loads(old["input"]), ensure_ascii=False, sort_keys=True, separators=(",", ":"),
+    )
+    if old_input != input_json:
         raise RuntimeError("Execution cùng tên nhưng khác input; cần điều tra")
 
 

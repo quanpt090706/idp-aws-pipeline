@@ -27,6 +27,28 @@ def test_valid_format_and_unicode_paths(aws_case, name, body):
     assert document(table)["s3_key"] == obj.key
 
 
+@pytest.mark.parametrize("character", ["\ufffe", "\uffff"])
+def test_accepted_key_survives_sqs_character_validation(aws_case, monkeypatch, character):
+    deps, table = aws_case
+    send = deps.sqs.send_message
+
+    def strict_send(**kwargs):
+        # Model the documented SQS constraint missing from Moto.
+        if any(
+            not (ord(c) in (9, 10, 13) or 0x20 <= ord(c) <= 0xD7FF
+                 or 0xE000 <= ord(c) <= 0xFFFD or 0x10000 <= ord(c) <= 0x10FFFF)
+            for c in kwargs["MessageBody"]
+        ):
+            raise ClientError({"Error": {"Code": "InvalidMessageContents"}}, "SendMessage")
+        return send(**kwargs)
+
+    monkeypatch.setattr(deps.sqs, "send_message", strict_send)
+    obj = upload(aws_case, file_name=f"invoice{character}.pdf")
+    assert handler.process_object(obj, deps, "unicode-transport") == "QUEUED"
+    message = json.loads(deps.sqs.receive_message(QueueUrl=deps.settings.queue_url)["Messages"][0]["Body"])
+    assert message["key"] == document(table)["s3_key"] == obj.key
+
+
 @pytest.mark.parametrize("body,limit,reason", [
     (b"", 100, "FILE_EMPTY"),
     (PDF_BYTES, len(PDF_BYTES) - 1, "FILE_TOO_LARGE"),

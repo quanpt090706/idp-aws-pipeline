@@ -9,6 +9,90 @@ mock_provider "aws" {
   mock_resource "aws_sfn_state_machine" {
     defaults = { arn = "arn:aws:states:us-east-1:123456789012:stateMachine:tv2-mock" }
   }
+  # Resolve policy dependencies so its JSON can be checked without applying.
+  mock_resource "aws_sqs_queue" {
+    override_during = plan
+    defaults        = { arn = "arn:aws:sqs:us-east-1:123456789012:idp-test" }
+  }
+  mock_resource "aws_cloudwatch_log_group" {
+    override_during = plan
+    defaults        = { arn = "arn:aws:logs:us-east-1:123456789012:log-group:/aws/lambda/idp-test" }
+  }
+}
+
+run "iam_unqualified_workflow" {
+  command = plan
+  module {
+    source = "../modules/tv2"
+  }
+  variables {
+    name_prefix          = "idp-test"
+    region               = "us-east-1"
+    upload_bucket_name   = "idp-test"
+    documents_table_name = "Documents"
+    state_machine_arn    = "arn:aws:states:us-east-1:123456789012:stateMachine:tv4-workflow"
+    lambda_role_arn      = "arn:aws:iam::123456789012:role/LambdaTestRole"
+    artifact_directory   = "../../build/tv2"
+    manage_iam_policies  = true
+  }
+  assert {
+    condition     = jsondecode(aws_iam_role_policy.tv2[0].policy).Statement[4].Resource == [var.state_machine_arn]
+    error_message = "StartExecution must authorize the base state machine ARN."
+  }
+  assert {
+    condition     = !contains(keys(jsondecode(aws_iam_role_policy.tv2[0].policy).Statement[4]), "Condition")
+    error_message = "Unqualified workflows must not emit a qualifier condition."
+  }
+}
+
+run "iam_workflow_alias" {
+  command = plan
+  module {
+    source = "../modules/tv2"
+  }
+  variables {
+    name_prefix          = "idp-test"
+    region               = "us-east-1"
+    upload_bucket_name   = "idp-test"
+    documents_table_name = "Documents"
+    state_machine_arn    = "arn:aws:states:us-east-1:123456789012:stateMachine:tv4-workflow:PROD"
+    lambda_role_arn      = "arn:aws:iam::123456789012:role/LambdaTestRole"
+    artifact_directory   = "../../build/tv2"
+    manage_iam_policies  = true
+  }
+  assert {
+    condition     = jsondecode(aws_iam_role_policy.tv2[0].policy).Statement[4].Resource == ["arn:aws:states:us-east-1:123456789012:stateMachine:tv4-workflow"]
+    error_message = "Alias authorization must use the base state machine ARN."
+  }
+  assert {
+    condition     = try(jsondecode(aws_iam_role_policy.tv2[0].policy).Statement[4].Condition["ForAnyValue:StringEquals"]["states:StateMachineQualifier"] == ["PROD"], false)
+    error_message = "Alias authorization must remain restricted to the requested qualifier."
+  }
+}
+
+run "iam_workflow_version" {
+  command = plan
+  module {
+    source = "../modules/tv2"
+  }
+  variables {
+    name_prefix          = "idp-test"
+    region               = "us-east-1"
+    upload_bucket_name   = "idp-test"
+    documents_table_name = "Documents"
+    state_machine_arn    = "arn:aws:states:us-east-1:123456789012:stateMachine:tv4-workflow:3"
+    lambda_role_arn      = "arn:aws:iam::123456789012:role/LambdaTestRole"
+    artifact_directory   = "../../build/tv2"
+    manage_iam_policies  = true
+  }
+  assert {
+    condition     = jsondecode(aws_iam_role_policy.tv2[0].policy).Statement[4].Resource == ["arn:aws:states:us-east-1:123456789012:stateMachine:tv4-workflow"]
+    error_message = "Version authorization must use the base state machine ARN."
+  }
+  assert {
+    condition     = try(jsondecode(aws_iam_role_policy.tv2[0].policy).Statement[4].Condition["ForAnyValue:StringEquals"]["states:StateMachineQualifier"] == ["3"], false)
+    error_message = "Version authorization must remain restricted to the requested qualifier."
+  }
 }
 
 run "dev_safe_defaults" {

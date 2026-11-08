@@ -5,6 +5,7 @@ Contract triển khai theo đề xuất đã được chủ nhiệm phần TV2 �
 TV1/TV4 vẫn cần xác nhận giao diện liên thông trước khi ghép cả hệ thống.
 Theo dõi từng Bước 0–13 tại [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md).
 TV5 nhận code và bắt đầu kiểm tra môi trường tại [TV5_START_HERE.md](TV5_START_HERE.md).
+Theo yêu cầu hiện tại của TV5, nhóm tạm kiểm thử local trước; các bước AWS bên dưới dành cho giai đoạn sau.
 
 ## 1. Kiểm thử trên máy
 
@@ -117,6 +118,9 @@ $tf = ".\.tools\terraform\1.13.5\terraform.exe"
 
 `terraform test` dùng `mock_provider "aws"` và `command=plan`: không tạo tài nguyên.
 Nó kiểm tra Standard workflow, timeout/visibility, DLQ, partial batch và mặc định hạn chế sửa role/bucket.
+Root dev yêu cầu Terraform từ 1.11 để chạy test dùng plan-time override; helper vẫn cài bản 1.13.5.
+Khi bật policy IAM, StartExecution dùng ARN workflow gốc; alias/version được giới hạn thêm
+bằng điều kiện `states:StateMachineQualifier`, không cấp quyền rộng sang workflow khác.
 Terraform binary được tải từ HashiCorp, kiểm tra SHA256; provider đã chọn được ghi trong lock file.
 
 Khi đã có thông tin lab, sao chép `terraform.tfvars.example` thành `terraform.tfvars`,
@@ -145,6 +149,8 @@ phân tách quyền giữa hai Lambda như thiết kế production.
 
 Preflight chỉ gọi API đọc: đối chiếu account/region, PK/SK đều kiểu String, Standard workflow,
 env/handler, queue/DLQ/retention/visibility, mapping enabled + partial batch và failure destination.
+Mọi mapping đang bật của đúng function/queue phải có `ReportBatchItemFailures`;
+visibility phải ít nhất `6 × Starter timeout + batch window lớn nhất của các mapping đó`.
 Check `validate_max_file_size` yêu cầu đúng giới hạn contract hiện tại 10485760 byte;
 không đặt env thì dùng mặc định 10 MiB của Validate. Muốn đổi giới hạn cần nhóm chốt lại contract,
 Terraform và các ca smoke tương ứng trước khi sử dụng.
@@ -160,11 +166,17 @@ khác 0 và tối đa 10 MiB. Chỉ khi đúng dev lab và preflight xanh:
 ```
 
 Script tạo record/document_id mới và upload 7 ca: PDF/JPG/PNG hợp lệ, sai đuôi, rỗng,
-sai chữ ký, quá lớn. Nó kiểm tra DDB và đúng 11 trường input workflow theo kiểu/giá trị;
+sai chữ ký, quá lớn. Nó kiểm tra status/reject_reason của DDB và đúng 11 trường input workflow theo kiểu/giá trị;
 ETag kỳ vọng lấy từ response upload S3, không tự suy ra MD5. Input thiếu/thừa trường hoặc sai dữ liệu đều không đạt;
 report chỉ lưu tên trường không khớp, không chép nguyên input vào log. Ca REJECTED phải không có execution.
 `input_mismatch_fields` dùng `$` cho JSON lỗi/không phải object, `$extra` cho trường dư;
 report có `scope=tv2_ingestion`, `ocr_verified=false` để không nhầm với nghiệm thu OCR của TV3/TV4.
+`--timeout` là cửa sổ polling sau upload (mặc định 180 giây), không phải SLA hiệu năng.
+Script quan sát hết cửa sổ và thực hiện một vòng quét cuối bắt đầu tại/sau deadline; API chậm có thể
+làm thời gian thực tế dài hơn. Vi phạm đã thấy được giữ lại, kể cả lần đọc sau không còn thấy.
+Trường `observation` ghi thời lượng yêu cầu/thực tế và `complete`; `permanent_absence_proven=false`
+nhắc rằng chưa thấy execution trong cửa sổ này không chứng minh nó không bao giờ xuất hiện.
+Các test tooling dùng đồng hồ giả nên không phải chờ 180 giây hoặc gọi AWS thật.
 Bằng chứng và danh sách tài nguyên thử ở `build/tv2/smoke-<run_id>.json`.
 Đây là kiểm tra nhận tài liệu đến workflow; execution đã bắt đầu mà OCR sau đó FAILED
 được báo riêng và không chứng minh phần TV3/TV4 thành công.

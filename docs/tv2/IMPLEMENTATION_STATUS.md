@@ -1,24 +1,26 @@
 # TV2 — đối chiếu đầy đủ với hướng dẫn
 
-Cập nhật 07/11/2026. Nhánh bàn giao `feature/tv2-ingestion-aws-handoff`.
+Cập nhật 08/11/2026. Nhánh bàn giao `feature/tv2-ingestion-aws-handoff`.
 Người phụ trách TV2 đã chọn triển khai contract đề xuất; người dùng xác nhận **chưa có hạ tầng**.
 Hiện hoàn thành phần local và cấu hình chuẩn bị deploy. Chưa xác nhận hoàn thành toàn bộ nhiệm vụ AWS.
+Nhóm tạm làm local theo TV5. Bản bàn giao tiếp nối commit `19eef25`;
+cập nhật ngày 08/11 bổ sung các sửa lỗi review và test hồi quy bên dưới, giữ các bước AWS chờ xác minh.
 
 ## Bằng chứng local đã chạy sau khi sửa review
 
 | Kiểm tra | Kết quả thực tế |
 | --- | --- |
-| `.venv/Scripts/python.exe -m pytest -q --junitxml=build/tv2/test-results.xml` | 213 passed, 0 failures, 0 errors, 0 skipped; kết quả đọc lại từ XML, gồm unit và giả lập AWS |
+| `.venv/Scripts/python.exe -m pytest -q --junitxml=build/tv2/test-results.xml` | 245 passed, 0 failures, 0 errors, 0 skipped; đọc lại từ XML: 143 test runtime/integration và 102 test tooling |
 | `.venv/Scripts/python.exe -m pip check` | No broken requirements found |
 | Moto S3 → Validate → SQS → Starter → Standard | 4 ca đạt: 1/20 tài liệu với tên thông thường hoặc bắt đầu bằng dấu chấm; mỗi document một execution dù replay; không phải test tải đồng thời AWS |
-| Build hai Lambda ZIP kèm SDK | Thành công; artifact + SHA256 ở `build/tv2/manifest.json` |
+| Build hai Lambda ZIP kèm SDK | Thành công; đối chiếu source, CRC, SHA256/kích thước với `build/tv2/manifest.json`; import từng ZIP bằng Python 3.13 với `-S` không dùng site-packages đều đạt |
 | Terraform 1.13.5 / hashicorp/aws 6.72.0 | Tải cục bộ; SHA256 binary và chữ ký provider đã được kiểm tra |
 | `terraform -chdir=infra/tv2-dev validate` | Success! The configuration is valid |
-| `terraform -chdir=infra/tv2-dev test` | 2 passed, 0 failed; cả hai dùng mock provider và plan, không gọi AWS |
+| `terraform -chdir=infra/tv2-dev test` | 5 passed, 0 failed; tất cả dùng mock provider và plan, không gọi AWS; có ARN không qualifier, alias và version |
 | Preflight chạy với config mẫu còn trống | BLOCKED rõ tên các trường thiếu, chưa truy cập AWS |
-| Preflight sau review | 28 test đạt; kiểm tra suffix filter, PK/SK String và giới hạn 10485760 byte đúng contract; thiếu env dùng mặc định runtime |
+| Preflight sau review | 36 test đạt; kiểm tra suffix filter, PK/SK String, giới hạn 10485760 byte, partial batch trên mọi mapping đang bật và visibility gồm batch window; thiếu env dùng mặc định runtime |
 | Probe sau review | 17 test đạt với response IAM tự dựng; đọc hết trang, phân loại ứng viên/cần kiểm tra thay vì khẳng định role dùng được |
-| Smoke tooling sau review | 39 test đạt với client/file tự dựng trong thư mục tạm; chặn input sai/thiếu/thừa trường hoặc sai kiểu; không chạy smoke lên AWS thật |
+| Smoke tooling sau review | 49 test đạt với client/file tự dựng và đồng hồ giả trong thư mục tạm; kiểm tra input, giữ lỗi đã thấy và quét cuối sau deadline kể cả API chậm; không chạy smoke lên AWS thật |
 | Alarm sau review | Mock plan xác nhận lỗi/hàng lỗi dùng 1/2 kỳ; tuổi queue dùng 2/2 kỳ với ngưỡng 300 giây |
 
 ## Lịch sử kiểm tra AWS ở phiên trước
@@ -56,7 +58,7 @@ Test Moto dùng dữ liệu giả/magic bytes; cần mẫu PDF/JPG/PNG ẩn danh
 | 10 — retry/DLQ/redrive | Cấu hình visibility180s, maxReceive5, retention4/14ngày, async retry2/maxage3600; runbook hai envelope riêng | Fault injection, message về DLQ, redrive phục hồi trên AWS thật |
 | 11 — test matrix | Unit + Moto integration 1/20 file, valid/reject/duplicate/SDK failure/partial batch/log không PII | AWS PDF/JPG/PNG, upload gần đồng thời, p95, quota/chi phí, lỗi hạ tầng và event lặp thật |
 | 12 — log/metric/alarm | JSON/EMF + Terraform alarm, log retention14ngày; metric lỗi riêng cho partial batch | Alarm transitions, SNS topic/subscription/nhận thông báo, dashboard/chi phí với TV5 |
-| 13 — bàn giao/PR/PROGRESS | Contract, fixture giả, runbook, PR description, branch và ghi chú PROGRESS | Input/message/log AWS thật, TV4 nhận bàn giao, GitHub access, commit/push/PR/review/merge |
+| 13 — bàn giao/PR/PROGRESS | Contract, ba fixture đồng nhất, runbook, PR description; commit `19eef25` đã bàn giao, bản cập nhật local ngày 08/11 bổ sung sửa lỗi review trên cùng nhánh | TV1/TV4/TV5 xác nhận contract và nhận bàn giao local; PR/review/merge; message/input/log AWS để giai đoạn sau |
 | Phụ lục — lỗi/vấn đáp/giới hạn | Các lỗi thường gặp trong guide + runbook; mô tả race, quota, retention, retry và giới hạn chữ ký | Không suy ra production-ready/exactly-once vĩnh viễn từ test local |
 
 ## Test matrix còn phải kiểm chứng trên AWS
@@ -97,6 +99,23 @@ PROGRESS định nghĩa `[x]` là đã test và merge; các ô tổng của dự
 Trong lần cleanup trước, bucket rỗng tạo dang dở đã được xóa và Terraform state trở lại trống;
 đây không phải xác nhận lại tài nguyên AWS hiện tại.
 
+## Sửa tiếp sau rà soát sâu ngày 08/11
+
+- SQS JSON escape U+FFFE/U+FFFF mà không đổi key sau decode; test thêm bộ kiểm tra ký tự
+  theo ràng buộc AWS vì Moto chưa thực thi ràng buộc đó.
+- Xác minh execution cũ bằng JSON chuẩn hóa có phân biệt kiểu; không ACK input `attempt=true/1.0`
+  khi message hiện tại có `attempt=1`, vẫn chấp nhận khác whitespace/thứ tự trường.
+- IAM StartExecution dùng ARN workflow gốc, thêm qualifier condition cho alias/version;
+  test riêng ARN không qualifier, alias và version bằng mock plan.
+- Preflight tính cả batch window, yêu cầu mọi mapping liên quan đang bật có partial batch.
+- Smoke quan sát hết cửa sổ sau upload và có vòng quét cuối bắt đầu tại/sau deadline;
+  giữ lỗi đã quan sát, ghi thời lượng thực tế, không khẳng định không có execution vĩnh viễn.
+- Root dev yêu cầu Terraform từ 1.11 cho test plan-time override; helper vẫn là 1.13.5.
+- Đồng bộ ba fixture cùng một object Unicode; bảng bàn giao ghi đúng commit/push đã có.
+
+Các khoảng trống vẫn để chờ: chạy runtime Python 3.12, worker thực sự đồng thời, Lambda hết timeout,
+vòng đời retry/DLQ/redrive và tích hợp/persistence của TV4. Không tính các mục này là đã đạt từ test local.
+
 ## Số liệu mẫu và số liệu chưa có
 
 | Nội dung | Nguồn và giới hạn sử dụng |
@@ -104,7 +123,7 @@ Trong lần cleanup trước, bucket rỗng tạo dang dở đã được xóa v
 | `tests/fixtures/*.json`: size 52341, ETag, ID, bucket, timestamp | Dữ liệu tự dựng để kiểm tra schema, không phải event/message/execution AWS đã thu |
 | `tests/helpers.py`, các response trong test Python và Terraform mock | Byte/định danh/trạng thái tự dựng; không chứng minh đọc được tài liệu, IAM hay Textract thật |
 | Tiền/số lượng trong `docs/data-model.md` | Ví dụ schema, không phải số liệu hóa đơn hoặc kết quả OCR đã xác minh |
-| 213 test Python và 2 mock plan | Kết quả thực tế của lệnh local, không phải số lượt xử lý trên AWS |
+| 245 test Python và 5 mock plan | Kết quả thực tế của lệnh local, không phải số lượt xử lý trên AWS |
 | SHA256/kích thước hai ZIP | Tính từ artifact build; xem `build/tv2/manifest.json`, không tự điền giá trị minh họa |
 | 10 MiB, visibility 180s, concurrency 5, ngưỡng alarm | Tham số cấu hình đề xuất, chưa phải kết quả đo hiệu năng |
 | p95 AWS, chi phí, độ chính xác OCR, thông lượng AWS | **CHƯA ĐO**; chưa điền số 0 hoặc số ước lượng thành kết quả |
