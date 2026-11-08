@@ -1,0 +1,21 @@
+{
+  "Comment": "IDP Document Processing Pipeline State Machine Skeleton",
+  "StartAt": "StartTextractJob",
+  "States": {
+    "StartTextractJob": {
+      "Type": "Task",
+      "Resource": "${start_job_lambda_arn}",
+      "Next": "WaitForCallback"
+    },
+    "WaitForCallback": {
+      "Type": "Pass",
+      "Comment": "Placeholder for SNS callback from Textract Async",
+      "Next": "ParseResults"
+    },
+    "ParseResults": {
+      "Type": "Task",
+      "Resource": "${parse_lambda_arn}",
+      "End": true
+    }
+  }
+}

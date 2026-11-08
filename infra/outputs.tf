@@ -98,3 +98,25 @@ output "sns_textract_topic_arn" {
   description = "ARN của SNS Topic Textract"
   value       = aws_sns_topic.textract_complete.arn
 }
+
+# --- 5. Compute Layer (Lambdas) ---
+output "lambda_validate_arn" {
+  description = "ARN của Lambda Validate"
+  value       = aws_lambda_function.validate.arn
+}
+
+output "lambda_start_job_arn" {
+  description = "ARN của Lambda Start-Job"
+  value       = aws_lambda_function.start_job.arn
+}
+
+output "lambda_parse_arn" {
+  description = "ARN của Lambda Parse"
+  value       = aws_lambda_function.parse.arn
+}
+
+# --- 6. Orchestration (Step Functions) ---
+output "step_functions_arn" {
+  description = "ARN của Step Functions State Machine điều phối"
+  value       = aws_sfn_state_machine.pipeline.arn
+}
