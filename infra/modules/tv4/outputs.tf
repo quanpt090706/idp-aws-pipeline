@@ -27,3 +27,13 @@ output "job_callbacks_table_arn" {
   description = "ARN bảng DynamoDB JobCallbacks."
   value       = var.create_dynamodb_tables ? aws_dynamodb_table.job_callbacks[0].arn : ""
 }
+
+output "notification_lambda_arn" {
+  description = "ARN của Lambda gửi thông báo qua SES."
+  value       = local.notification_lambda_arn
+}
+
+output "notification_lambda_name" {
+  description = "Tên Lambda gửi thông báo qua SES."
+  value       = var.create_notification_lambda && var.notification_lambda_arn == "" ? aws_lambda_function.notification[0].function_name : ""
+}
