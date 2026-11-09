@@ -20,7 +20,7 @@ File này là bảng tiến độ chung của nhóm. Mỗi Pull Request hoàn th
 | Mã | Họ tên/GitHub | Vai trò             | Trạng thái hiện tại |
 | --- | --------------- | -------------------- | ----------------------- |
 | TV1 | Chưa điền    | Frontend & Auth      | Chưa bắt đầu        |
-| TV2 | Chưa điền    | Ingestion & Queue    | Chưa bắt đầu        |
+| TV2 | Chưa điền    | Ingestion & Queue    | Đã có mã/test local; chờ AWS Academy và PR/merge |
 | TV3 | Chưa điền    | Core OCR / AI        | Chưa bắt đầu        |
 | TV4 | Chưa điền    | Data & Orchestration | Chưa bắt đầu        |
 | TV5 | Chưa điền    | DevOps & Infra       | Chưa bắt đầu        |
@@ -42,8 +42,8 @@ File này là bảng tiến độ chung của nhóm. Mỗi Pull Request hoàn th
 
 Phụ trách: Nhóm trưởng điều phối, cả nhóm duyệt.
 
-- [X] Thống nhất thứ tự các giai đoạn.
-- [X] Thống nhất vai trò của TV1–TV5 theo `README.md`.
+- [ ] Thống nhất thứ tự các giai đoạn.
+- [ ] Thống nhất vai trò của TV1–TV5 theo `README.md`.
 - [ ] Chốt phạm vi bắt buộc của bản demo.
 - [ ] Chốt loại file, kích thước và số trang tối đa.
 - [ ] Chốt cấu trúc dữ liệu chung.
@@ -98,6 +98,9 @@ Không yêu cầu TV1–TV4 phải code xong. Chỉ xác nhận rằng các quy 
 
 ### TV2 — Viết phần kiểm tra file
 
+> Triển khai local và bằng chứng kiểm thử: [TV2 — trạng thái Bước 0–13](docs/tv2/IMPLEMENTATION_STATUS.md).
+> Giữ các ô `[ ]` cho đến khi đạt tiêu chí test + merge theo quy tắc ở mục 1.
+
 - [ ] Viết quy tắc chấp nhận/từ chối file.
 - [ ] Tạo S3 event mẫu.
 - [ ] Viết hàm đọc và URL-decode S3 key.
@@ -108,15 +111,24 @@ Không yêu cầu TV1–TV4 phải code xong. Chỉ xác nhận rằng các quy 
 
 ### TV3 — Viết parser bằng dữ liệu mẫu
 
-- [ ] Chuẩn bị raw Textract JSON mẫu cho hóa đơn.
-- [ ] Chuẩn bị raw Textract JSON mẫu cho bảng điểm.
-- [ ] Viết parser hóa đơn khung.
-- [ ] Trích xuất vendor, date và total.
-- [ ] Trích xuất danh sách sản phẩm.
-- [ ] Viết parser bảng điểm khung.
-- [ ] Trích xuất thông tin sinh viên.
-- [ ] Trích xuất danh sách môn học.
-- [ ] Viết unit test cho trường hợp thiếu dữ liệu.
+> Cập nhật local 09/11/2026 trên nhánh `khoa/tv3`: 9 hạng mục
+> code/fixture đã hoàn thành và 6 unit test chạy thành công; còn bàn
+> giao kết quả cho TV4.
+
+- [x] Chuẩn bị raw Textract JSON mẫu cho hóa đơn.
+- [x] Chuẩn bị raw Textract JSON mẫu cho bảng điểm.
+- [x] Viết parser hóa đơn khung.
+- [x] Trích xuất vendor, date và total.
+- [x] Trích xuất danh sách sản phẩm.
+- [x] Viết parser bảng điểm khung.
+- [x] Trích xuất thông tin sinh viên.
+- [x] Trích xuất danh sách môn học.
+- [x] Viết unit test cho trường hợp thiếu dữ liệu.
+- [ ] Bàn giao cho TV4: PR/nhánh code, hai JSON kết quả mẫu trong
+  `tests/fixtures/expected/`, hai JSON Schema trong `lambdas/parse/schemas/`,
+  cấu trúc output `document_type`/`confidence`/`warnings`/`extracted`, lệnh chạy
+  test và kết quả 6 test thành công; TV4 xác nhận dùng được các mẫu này
+  để thiết kế Step Functions và lưu dữ liệu vào DynamoDB.
 
 ### TV4 — Thiết kế dữ liệu và quy trình
 

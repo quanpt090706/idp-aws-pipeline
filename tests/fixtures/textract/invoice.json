@@ -1,0 +1,64 @@
+{
+  "DocumentMetadata": {"Pages": 1},
+  "ExpenseDocuments": [
+    {
+      "ExpenseIndex": 1,
+      "SummaryFields": [
+        {
+          "Type": {"Text": "VENDOR_NAME"},
+          "LabelDetection": {"Text": "Don vi ban"},
+          "ValueDetection": {"Text": "Cua hang Demo", "Confidence": 98.0}
+        },
+        {
+          "Type": {"Text": "INVOICE_RECEIPT_ID"},
+          "LabelDetection": {"Text": "So hoa don"},
+          "ValueDetection": {"Text": "HD-DEMO-001", "Confidence": 97.0}
+        },
+        {
+          "Type": {"Text": "INVOICE_RECEIPT_DATE"},
+          "LabelDetection": {"Text": "Ngay hoa don"},
+          "ValueDetection": {"Text": "06/11/2026", "Confidence": 96.0}
+        },
+        {
+          "Type": {"Text": "SUBTOTAL"},
+          "ValueDetection": {"Text": "420.000 VND", "Confidence": 96.0}
+        },
+        {
+          "Type": {"Text": "TAX"},
+          "ValueDetection": {"Text": "30.000 VND", "Confidence": 95.0}
+        },
+        {
+          "Type": {"Text": "TOTAL"},
+          "ValueDetection": {
+            "Text": "450.000 VND",
+            "Confidence": 99.0,
+            "Currency": {"Code": "VND"}
+          }
+        }
+      ],
+      "LineItemGroups": [
+        {
+          "LineItemGroupIndex": 1,
+          "LineItems": [
+            {
+              "LineItemExpenseFields": [
+                {"Type": {"Text": "ITEM"}, "ValueDetection": {"Text": "Sua tuoi", "Confidence": 97.0}},
+                {"Type": {"Text": "QUANTITY"}, "ValueDetection": {"Text": "2", "Confidence": 96.0}},
+                {"Type": {"Text": "UNIT_PRICE"}, "ValueDetection": {"Text": "30.000", "Confidence": 95.0}},
+                {"Type": {"Text": "PRICE"}, "ValueDetection": {"Text": "60.000", "Confidence": 98.0}}
+              ]
+            },
+            {
+              "LineItemExpenseFields": [
+                {"Type": {"Text": "ITEM"}, "ValueDetection": {"Text": "Banh demo", "Confidence": 94.0}},
+                {"Type": {"Text": "QUANTITY"}, "ValueDetection": {"Text": "3", "Confidence": 93.0}},
+                {"Type": {"Text": "UNIT_PRICE"}, "ValueDetection": {"Text": "120.000", "Confidence": 92.0}},
+                {"Type": {"Text": "PRICE"}, "ValueDetection": {"Text": "360.000", "Confidence": 95.0}}
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

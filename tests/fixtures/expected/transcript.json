@@ -1,0 +1,30 @@
+{
+  "document_type": "TRANSCRIPT",
+  "confidence": 94.88,
+  "warnings": [],
+  "extracted": {
+    "student_id": "SV-DEMO-001",
+    "student_name": "Nguyen Van Demo",
+    "school_name": "Truong Dai hoc Demo",
+    "academic_year": "2025-2026",
+    "gpa": null,
+    "subjects": [
+      {
+        "code": "IT001",
+        "name": "Lap trinh",
+        "credits": 3,
+        "score": 8.5,
+        "letter_grade": null,
+        "confidence": 95.5
+      },
+      {
+        "code": "CS102",
+        "name": "Co so du lieu",
+        "credits": 3,
+        "score": 9,
+        "letter_grade": null,
+        "confidence": 91.5
+      }
+    ]
+  }
+}
