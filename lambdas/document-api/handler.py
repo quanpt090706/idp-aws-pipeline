@@ -24,9 +24,9 @@ CONTENT_TYPES = {
     ".jpeg": "image/jpeg",
     ".png": "image/png",
 }
-PUBLIC_FIELDS = (
+SUMMARY_FIELDS = (
     "document_id", "document_type", "file_name", "status", "created_at",
-    "updated_at", "reject_reason", "confidence", "warnings", "extracted",
+    "updated_at", "reject_reason",
 )
 
 
@@ -107,8 +107,25 @@ def _cursor(value, user_id):
     return data
 
 
-def _public(item):
-    return {field: item[field] for field in PUBLIC_FIELDS if field in item}
+def _normalise_json(value, expected_type, fallback):
+    if isinstance(value, str):
+        try:
+            value = json.loads(value)
+        except ValueError:
+            return fallback
+    return value if isinstance(value, expected_type) else fallback
+
+
+def _public(item, include_result=False):
+    result = {field: item[field] for field in SUMMARY_FIELDS if field in item}
+    if include_result:
+        if "confidence" in item:
+            result["confidence"] = item["confidence"]
+        if "extracted" in item:
+            result["extracted"] = _normalise_json(item["extracted"], dict, {})
+        if "warnings" in item:
+            result["warnings"] = _normalise_json(item["warnings"], list, [])
+    return result
 
 
 def _table():
@@ -187,7 +204,7 @@ def _detail(event, user_id):
     )
     if "Item" not in result:
         raise RequestError(404, "NOT_FOUND")
-    return _response(200, {"document": _public(result["Item"])})
+    return _response(200, {"document": _public(result["Item"], include_result=True)})
 
 
 def lambda_handler(event, _context):

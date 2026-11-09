@@ -146,6 +146,25 @@ def test_detail_ownership_and_result_serialization(aws):
     )
 
 
+def test_detail_normalises_tv4_json_strings_without_expanding_list(aws):
+    doc_id = create()[1]["document"]["document_id"]
+    aws.update_item(
+        Key={"PK": "USER#user-1", "SK": f"DOC#{doc_id}"},
+        UpdateExpression="SET #s=:s, extracted=:e, warnings=:w",
+        ExpressionAttributeNames={"#s": "status"},
+        ExpressionAttributeValues={
+            ":s": "NEEDS_REVIEW",
+            ":e": json.dumps({"vendor_name": "Demo"}),
+            ":w": json.dumps([{"code": "LOW_CONFIDENCE", "message": "Kiểm tra tổng tiền"}]),
+        },
+    )
+    detail = call(event("GET", f"/documents/{doc_id}", doc_id=doc_id))[1]["document"]
+    assert detail["extracted"] == {"vendor_name": "Demo"}
+    assert detail["warnings"][0]["code"] == "LOW_CONFIDENCE"
+    listing = call(event("GET", "/documents"))[1]["documents"][0]
+    assert "extracted" not in listing and "warnings" not in listing
+
+
 def test_bad_json_limit_and_cursor(aws):
     request = event("POST", "/documents")
     request["body"] = "{"

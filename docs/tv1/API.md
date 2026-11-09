@@ -57,10 +57,12 @@ remain until a separately agreed cleanup policy is implemented.
   for another user's document.
 
 Both operations query `PK=USER#<sub>`; there is no table scan or client-supplied
-`user_id`. Public document fields are `document_id`, `document_type`,
-`file_name`, `status`, `created_at`, `updated_at`, `reject_reason`, `confidence`,
-`warnings` and `extracted`. The API does not expose S3 keys, raw Textract data,
-or `reject_detail`. Terminal statuses are `SUCCEEDED`, `NEEDS_REVIEW`, `FAILED`,
+`user_id`. List rows contain `document_id`, `document_type`, `file_name`,
+`status`, `created_at`, `updated_at` and optional `reject_reason`. Detail also
+contains `confidence`, `warnings` and `extracted` when present. TV4 currently
+stores `warnings` and `extracted` as JSON strings; this API decodes them into an
+array and object. The API does not expose S3 keys, raw Textract data, or
+`reject_detail`. Terminal statuses are `SUCCEEDED`, `NEEDS_REVIEW`, `FAILED`,
 `REJECTED`. The UI maps TV2's `reject_reason` to a friendly message.
 
 ## Integration and deployment
