@@ -10,6 +10,8 @@ Hệ thống bóc tách hóa đơn / bảng điểm thông minh trên AWS - serv
 
 - [Theo dõi tiến độ](PROGRESS.md)
 - [Kế hoạch tổng thể](<đọc đi mấy tk bu đà.md>)
+- [TV2: chạy local, AWS Academy và bàn giao](docs/tv2/README.md)
+- [TV2: đối chiếu Bước 0–13](docs/tv2/IMPLEMENTATION_STATUS.md)
 
 ---
 
@@ -20,7 +22,7 @@ Pipeline tự động nhận diện và trích xuất dữ liệu có cấu trú
 Luồng xử lý chính:
 
 ```
-Upload file → S3 → SQS → Step Functions → Textract (async) → Parse → DynamoDB + Email
+Upload file → S3 → Lambda Validate → SQS → Workflow Starter → Step Functions → Textract (async) → Parse → DynamoDB + Email
 ```
 
 ---
@@ -50,6 +52,7 @@ flowchart TD
 
     subgraph Orch[Orchestration Layer]
         SFN{{Step Functions}}
+        LambdaW[Lambda – Workflow Starter]
         LambdaS[Lambda – Start Job]
         Textract[Amazon Textract]
         SNS((SNS Topic))
@@ -74,7 +77,7 @@ flowchart TD
     APIGW -->|Presigned URL| S3Up
     S3Up -->|S3 Event| LambdaV --> SQS
     SQS -->|Retry fail| DLQ
-    SQS --> SFN --> LambdaS --> Textract
+    SQS --> LambdaW --> SFN --> LambdaS --> Textract
     Textract --> SNS --> LambdaP
     LambdaP --> DDB & S3R & SES
     CICD --> IaC
@@ -85,6 +88,10 @@ flowchart TD
 ---
 
 ## Công nghệ sử dụng
+
+Phần TV2 có mã và test local. Hạ tầng `infra/tv2-dev` hiện là cấu hình chưa deploy;
+workflow mock TV2 chỉ kiểm tra nhận input, không chứng minh OCR end-to-end.
+Xem trạng thái từng bước trong tài liệu TV2 trước khi sử dụng trên AWS Academy.
 
 | Lớp               | Dịch vụ AWS                                          |
 | ------------------ | ------------------------------------------------------ |
@@ -118,11 +125,14 @@ idp-aws-pipeline/
 ├── frontend/               # Giao diện web (S3 + CloudFront)
 ├── lambdas/
 │   ├── validate/           # Kiểm tra file đầu vào
+│   ├── workflow-starter/   # SQS → Standard Step Functions (TV2)
 │   ├── start-job/          # Gọi Textract async
 │   └── parse/              # Xử lý kết quả Textract
 ├── infra/                  # Terraform / CDK
 │   └── step_functions/     # Định nghĩa state machine (ASL JSON)
 ├── tests/                  # Unit test cho từng Lambda
+├── scripts/                # Build ZIP, preflight và smoke test TV2
+├── requirements-dev.txt    # Dependency local đã khóa phiên bản
 ├── docs/                   # Tài liệu kỹ thuật chi tiết
 │   ├── flows/              # Sequence diagram từng luồng xử lý
 │   │   ├── upload-flow.md
