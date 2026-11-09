@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://idp-aws-pipeline.local/schemas/invoice-result.schema.json",
+  "title": "Normalized invoice parser result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["document_type", "confidence", "warnings", "extracted"],
+  "properties": {
+    "document_type": {"const": "INVOICE"},
+    "confidence": {"type": "number", "minimum": 0, "maximum": 100},
+    "warnings": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/warning"}
+    },
+    "extracted": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "vendor_name",
+        "invoice_number",
+        "invoice_date",
+        "currency",
+        "subtotal",
+        "tax_amount",
+        "total_amount",
+        "items"
+      ],
+      "properties": {
+        "vendor_name": {"type": ["string", "null"]},
+        "invoice_number": {"type": ["string", "null"]},
+        "invoice_date": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        "currency": {
+          "type": ["string", "null"],
+          "pattern": "^[A-Z]{3}$"
+        },
+        "subtotal": {"type": ["number", "null"]},
+        "tax_amount": {"type": ["number", "null"]},
+        "total_amount": {"type": ["number", "null"]},
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["description", "quantity", "unit_price", "amount", "confidence"],
+            "properties": {
+              "description": {"type": ["string", "null"]},
+              "quantity": {"type": ["number", "null"]},
+              "unit_price": {"type": ["number", "null"]},
+              "amount": {"type": ["number", "null"]},
+              "confidence": {"type": "number", "minimum": 0, "maximum": 100}
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "warning": {
+      "type": "object",
+      "required": ["code", "field", "message"],
+      "properties": {
+        "code": {"type": "string"},
+        "field": {"type": "string"},
+        "message": {"type": "string"}
+      }
+    }
+  }
+}

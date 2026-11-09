@@ -111,15 +111,24 @@ Không yêu cầu TV1–TV4 phải code xong. Chỉ xác nhận rằng các quy 
 
 ### TV3 — Viết parser bằng dữ liệu mẫu
 
-- [ ] Chuẩn bị raw Textract JSON mẫu cho hóa đơn.
-- [ ] Chuẩn bị raw Textract JSON mẫu cho bảng điểm.
-- [ ] Viết parser hóa đơn khung.
-- [ ] Trích xuất vendor, date và total.
-- [ ] Trích xuất danh sách sản phẩm.
-- [ ] Viết parser bảng điểm khung.
-- [ ] Trích xuất thông tin sinh viên.
-- [ ] Trích xuất danh sách môn học.
-- [ ] Viết unit test cho trường hợp thiếu dữ liệu.
+> Cập nhật local 09/11/2026 trên nhánh `khoa/tv3`: 9 hạng mục
+> code/fixture đã hoàn thành và 6 unit test chạy thành công; còn bàn
+> giao kết quả cho TV4.
+
+- [x] Chuẩn bị raw Textract JSON mẫu cho hóa đơn.
+- [x] Chuẩn bị raw Textract JSON mẫu cho bảng điểm.
+- [x] Viết parser hóa đơn khung.
+- [x] Trích xuất vendor, date và total.
+- [x] Trích xuất danh sách sản phẩm.
+- [x] Viết parser bảng điểm khung.
+- [x] Trích xuất thông tin sinh viên.
+- [x] Trích xuất danh sách môn học.
+- [x] Viết unit test cho trường hợp thiếu dữ liệu.
+- [ ] Bàn giao cho TV4: PR/nhánh code, hai JSON kết quả mẫu trong
+  `tests/fixtures/expected/`, hai JSON Schema trong `lambdas/parse/schemas/`,
+  cấu trúc output `document_type`/`confidence`/`warnings`/`extracted`, lệnh chạy
+  test và kết quả 6 test thành công; TV4 xác nhận dùng được các mẫu này
+  để thiết kế Step Functions và lưu dữ liệu vào DynamoDB.
 
 ### TV4 — Thiết kế dữ liệu và quy trình
 
