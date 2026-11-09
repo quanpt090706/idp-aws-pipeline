@@ -1,0 +1,44 @@
+name: Infrastructure Lint & Validate (CI)
+
+# Trigger khi có push hoặc tạo Pull Request vào nhánh main liên quan tới thư mục infra
+on:
+  push:
+    branches:
+      - main
+      - 'feature/**'
+    paths:
+      - 'infra/**'
+      - '.github/workflows/infra-check.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'infra/**'
+      - '.github/workflows/infra-check.yml'
+
+jobs:
+  terraform-check:
+    name: Terraform Lint & Validate
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: infra
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.5.7"
+
+      - name: Check Terraform Formatting
+        run: terraform fmt -check -diff
+
+      - name: Initialize Terraform (Local Mode)
+        run: terraform init -backend=false
+
+      - name: Validate Terraform Syntax
+        run: terraform validate -no-color

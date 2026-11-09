@@ -12,12 +12,14 @@ __pycache__/
 venv/
 env/
 
-# Terraform
+# Terraform & Build artifacts
 .terraform/
 *.tfstate
 *.tfstate.backup
 *.tfvars
 !terraform.tfvars.example
+infra/build/
+*.zip
 
 # Node / Frontend
 node_modules/

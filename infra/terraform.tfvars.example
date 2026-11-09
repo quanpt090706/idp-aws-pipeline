@@ -1,0 +1,24 @@
+# ==============================================================================
+# FILE CẤU HÌNH MẪU (TERRAFORM TFVARS EXAMPLE)
+#
+# Hướng dẫn sử dụng:
+# 1. Copy file này thành `terraform.tfvars`:
+#    cp terraform.tfvars.example terraform.tfvars
+# 2. File `terraform.tfvars` đã nằm trong .gitignore nên không bị lộ lên GitHub.
+# ==============================================================================
+
+# Region bắt buộc cho AWS Academy Learner Lab
+aws_region   = "us-east-1"
+project_name = "idp"
+environment  = "dev"
+
+# Cấu hình cho AWS Academy:
+# Bật true để Terraform sử dụng LabRole có sẵn thay vì cố tạo Role mới (tránh lỗi cấm quyền)
+use_lab_role = true
+
+# Thay Account ID của bạn vào ARN bên dưới khi khởi động Learner Lab:
+# (Lấy trong mục Details > Show > AWS CLI của Learner Lab)
+lab_role_arn = "arn:aws:iam::123456789012:role/LabRole"
+
+# Giữ log CloudWatch 7 ngày để không vượt quota miễn phí
+log_retention_days = 7
