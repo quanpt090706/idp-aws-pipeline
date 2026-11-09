@@ -87,6 +87,14 @@ Không yêu cầu TV1–TV4 phải code xong. Chỉ xác nhận rằng các quy 
 
 ### TV1 — Làm giao diện bằng dữ liệu giả
 
+> Cập nhật 09/11/2026 — [PR #5](https://github.com/quanpt090706/idp-aws-pipeline/pull/5)
+> đã đưa lên nhánh `feature/tv1-frontend`: giao diện login → upload → processing
+> → invoice/transcript result, chế độ mock dùng fixture có sẵn và chế độ
+> Cognito/API thật. `npm test` đạt 7 test, build mock/live thành công, smoke
+> test trên Edge đi hết hai loại tài liệu và CI frontend đạt. Chưa chạy luồng
+> end-to-end trên AWS; frontend phụ thuộc API/IaC ở PR #4. Giữ các ô `[ ]` theo
+> quy tắc ở mục 1 cho tới khi PR được review và merge.
+
 - [ ] Vẽ luồng login → upload → processing → result.
 - [ ] Tạo frontend skeleton và lệnh build.
 - [ ] Làm trang đăng nhập giả.
