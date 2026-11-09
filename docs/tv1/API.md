@@ -70,7 +70,8 @@ array and object. The API does not expose S3 keys, raw Textract data, or
 1. Review the TV2 key/record contract in `docs/tv2/CONTRACT.md` and agree with
    TV4 on the final detail response shape. Parser fixtures use `vendor_name`,
    while `docs/data-model.md` has an older `vendor` example.
-2. Run `terraform -chdir=infra init`, `terraform -chdir=infra validate`, and
+2. Create the ignored `infra/build/` directory for Lambda ZIP artifacts, then
+   run `terraform -chdir=infra init`, `terraform -chdir=infra validate`, and
    inspect `terraform -chdir=infra plan` with the correct AWS account and lab
    role configuration. Do not commit `terraform.tfvars` or state files.
 3. Apply the reviewed plan in the intended account. Terraform outputs provide
