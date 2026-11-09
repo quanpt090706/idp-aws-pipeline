@@ -19,7 +19,7 @@ File này là bảng tiến độ chung của nhóm. Mỗi Pull Request hoàn th
 
 | Mã | Họ tên/GitHub | Vai trò             | Trạng thái hiện tại |
 | --- | --------------- | -------------------- | ----------------------- |
-| TV1 | Chưa điền    | Frontend & Auth      | Chưa bắt đầu        |
+| TV1 | Chưa điền    | Frontend & Auth      | Đã có mã/test local trên PR #4 và #5; chờ review, merge và kiểm thử AWS |
 | TV2 | Chưa điền    | Ingestion & Queue    | Đã có mã/test local; chờ AWS Academy và PR/merge |
 | TV3 | Chưa điền    | Core OCR / AI        | Chưa bắt đầu        |
 | TV4 | Chưa điền    | Data & Orchestration | Chưa bắt đầu        |
@@ -271,6 +271,14 @@ Bàn giao cho TV1:
 ## 10. Giai đoạn 6 — TV1 kết nối website thật
 
 Phụ trách chính: TV1. Hỗ trợ hạ tầng: TV5. Hỗ trợ dữ liệu: TV4.
+
+> Cập nhật 09/11/2026 — [PR #4](https://github.com/quanpt090706/idp-aws-pipeline/pull/4)
+> đã đưa lên nhánh `feature/tv1-document-api`: Cognito, API Gateway JWT,
+> Lambda tạo bản ghi `UPLOAD_PENDING` và presigned URL, API danh sách/chi tiết
+> theo `user_id`, Terraform frontend bucket private/CloudFront/CORS. Đã chạy
+> 284 test Python, `terraform validate` và CI thành công. Chưa apply hoặc smoke
+> test trên AWS vì môi trường hiện tại chưa có credentials; cần xác nhận tích hợp
+> TV2/TV4. Các ô bên dưới vẫn `[ ]` theo quy tắc ở mục 1 vì PR chưa merge.
 
 - [ ] Tích hợp Cognito login/logout.
 - [ ] API từ chối request không có token hợp lệ.
