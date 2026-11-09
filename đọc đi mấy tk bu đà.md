@@ -144,6 +144,23 @@ Textract JSON mẫu
 → JSON có cấu trúc
 ```
 
+Cập nhật tiến độ TV3 ngày 09/11/2026:
+
+1. Đã chuẩn bị raw Textract JSON mẫu cho hóa đơn và bảng điểm.
+2. Đã viết parser hóa đơn và parser bảng điểm.
+3. Đã chuẩn hóa ngày, số tiền, tiền tệ, confidence và warnings.
+4. Đã xử lý trường hợp thiếu dữ liệu hoặc độ tin cậy thấp.
+5. Đã có fixture, JSON Schema và 6 unit test parser chạy thành công.
+6. Parser local đã được merge vào `main`.
+
+Kết quả local TV3 đã đạt:
+
+```text
+Textract JSON mẫu
+→ parser hóa đơn/bảng điểm
+→ normalized JSON + confidence + warnings
+```
+
 ## TV4 thiết kế nơi lưu và các bước xử lý
 
 TV4 làm theo thứ tự:
@@ -300,6 +317,39 @@ Kết quả TV3 bàn giao cho TV4:
     "total_amount": 450000
   }
 }
+```
+
+Cập nhật hiện thực local của TV3 ngày 09/11/2026:
+
+1. Đã viết Lambda Start Job gọi đúng chức năng Textract cho hóa đơn
+   và bảng điểm.
+2. Đã tạo mã chống khởi động trùng và lưu `job_id`, `document_id`,
+   callback token, loại tài liệu và TTL vào JobCallbacks.
+3. Đã viết Lambda nhận SNS callback, lấy đủ các trang kết quả và
+   bỏ qua callback đã xử lý.
+4. Đã viết phần lưu raw JSON vào S3 Results và không gửi raw JSON lớn
+   qua Step Functions.
+5. Đã nối callback với parser, `SUCCEEDED`, `NEEDS_REVIEW`, `FAILED` và
+   hai nhánh Step Functions thành công/thất bại.
+6. Đã có 16 unit test handler; toàn bộ test Python trong repo đạt
+   300 test và 5 subtest.
+
+Phần còn chờ AWS `dev`:
+
+```text
+TV5 cấu hình IAM + biến môi trường + SNS subscription
+→ merge code TV3
+→ deploy môi trường dev chung
+→ chạy thử hóa đơn và bảng điểm thật
+```
+
+Tài liệu bàn giao của TV3:
+
+```text
+lambdas/parse/README.md
+PROGRESS.md — Giai đoạn 4
+docs/tv4/CONTRACT.md
+tests/tv3/
 ```
 
 ---
