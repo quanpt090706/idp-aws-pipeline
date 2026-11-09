@@ -57,3 +57,9 @@ export function displayValue(value) {
   if (value === null || value === undefined || value === "") return "—";
   return String(value);
 }
+
+export function warningText(warning) {
+  if (typeof warning === "string") return warning;
+  if (warning && typeof warning === "object") return warning.message || warning.code || "Cần kiểm tra kết quả.";
+  return "Cần kiểm tra kết quả.";
+}

@@ -4,7 +4,7 @@ import { webcrypto } from "node:crypto";
 import { configFromEnv } from "../scripts/config.mjs";
 import { ApiError, DocumentApi } from "../src/api.js";
 import { completeLogin, idToken, loginUrl, logoutUrl } from "../src/auth.js";
-import { documentMessage, validateFile } from "../src/format.js";
+import { documentMessage, validateFile, warningText } from "../src/format.js";
 import { MockApi } from "../src/mock.js";
 
 function storage() {
@@ -39,6 +39,8 @@ test("browser rejects empty, oversized and misleading files before API call", ()
   assert.throws(() => validateFile({ name: "../image.png", size: 2 }), /Tên tệp/);
   assert.equal(documentMessage({ status: "REJECTED", reject_reason: "CONTENT_MISMATCH" }),
     "Nội dung tệp không khớp định dạng đã chọn.");
+  assert.equal(warningText("LOW_CONFIDENCE"), "LOW_CONFIDENCE");
+  assert.equal(warningText({ code: "LOW_CONFIDENCE", message: "Kiểm tra tổng tiền" }), "Kiểm tra tổng tiền");
 });
 
 test("API sends JWT only to API and uses returned signed headers for S3", async () => {

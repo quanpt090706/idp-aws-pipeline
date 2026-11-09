@@ -1,6 +1,6 @@
 import { ApiError, DocumentApi } from "./api.js";
 import { clearSession, completeLogin, idToken, isMockLoggedIn, loginUrl, logoutUrl, mockLogin } from "./auth.js";
-import { displayValue, documentMessage, formatNumber, STATUS_LABELS, TERMINAL, validateFile } from "./format.js";
+import { displayValue, documentMessage, formatNumber, STATUS_LABELS, TERMINAL, validateFile, warningText } from "./format.js";
 import { MockApi } from "./mock.js";
 
 const byId = id => document.getElementById(id);
@@ -152,7 +152,7 @@ function resultFields(doc, container) {
   if (Array.isArray(doc.warnings) && doc.warnings.length) {
     container.append(node("h3", "", "Cần chú ý"));
     const warnings = node("ul", "warning-list");
-    for (const warning of doc.warnings) warnings.append(node("li", "", warning.message || warning.code || "Cần kiểm tra kết quả."));
+    for (const warning of doc.warnings) warnings.append(node("li", "", warningText(warning)));
     container.append(warnings);
   }
 }
