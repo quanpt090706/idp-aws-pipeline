@@ -16,11 +16,11 @@ flowchart TD
     B --> C{Kiểm tra file}
 
     C -->|Định dạng sai\nvd: .exe, .zip| D[Ghi log lỗi]
-    C -->|Kích thước > 500MB| D
+    C -->|Kích thước vượt 10 MiB demo| D
     C -->|File bị corrupt| D
     C -->|Hợp lệ| E[Đẩy vào SQS Queue chính]
 
-    D --> F[Đẩy vào Dead Letter Queue]
+    D --> F[Documents REJECTED kèm lý do\nKhông gửi Processing SQS]
     F --> G[CloudWatch ghi metric\nlỗi validation tăng]
     G --> H{Vượt ngưỡng\nalarm?}
     H -->|Có| I[CloudWatch Alarm\ngửi SNS alert cho admin]
@@ -85,7 +85,7 @@ flowchart LR
 
 | Loại lỗi | Nơi xảy ra | Chiến lược | Hành động |
 |---|---|---|---|
-| File sai định dạng / kích thước | Lambda Validate | Fail fast | Đẩy DLQ, ghi log |
+| File sai định dạng / kích thước | Lambda Validate | Fail fast | REJECTED + lý do, không enqueue |
 | Throttling từ Textract | Step Functions | Retry + exponential backoff | Tối đa 3 lần, sau đó DLQ |
 | Textract job FAILED | SNS → Lambda Parse | Catch và escalate | Ghi DynamoDB, alert admin |
 | Parse không đọc được trường | Lambda Parse | Degrade gracefully | Lưu raw JSON, flag manual review |
@@ -94,6 +94,12 @@ flowchart LR
 ---
 
 ## Dead Letter Queue — "Phòng cách ly" file lỗi
+
+Với TV2, **Processing DLQ** giữ message contract 1.0 của Starter bị lỗi sau nhiều lần nhận;
+**validate-failures** giữ envelope invocation async (trường requestPayload là S3 event gốc).
+Không redrive envelope Validate vào Processing SQS. File bị REJECTED không thuộc hai hàng lỗi này.
+Ví dụ xử lý lỗi Textract ở các mục còn lại cần TV4 xác định đích riêng; không tự dùng chung Processing DLQ.
+Quy trình phục hồi chi tiết ở [runbook TV2](../tv2/README.md).
 
 DLQ không phải thùng rác — đây là nơi lưu tạm **có thể xử lý lại** sau:
 
