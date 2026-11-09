@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#142237">
+  <title>Document Studio · IDP</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <div class="site-shell">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="Document Studio, trang chủ">
+        <span class="brand-icon" aria-hidden="true">◇</span>
+        <span><strong>Document Studio</strong><small>INTELLIGENT DOCUMENT PROCESSING</small></span>
+      </a>
+      <div class="top-actions">
+        <span id="mode-badge" class="mode-badge">Đang tải…</span>
+        <button id="logout-button" class="button button-quiet" type="button" hidden>Đăng xuất</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <span class="eyebrow">NHÓM 6 · ĐIỆN TOÁN ĐÁM MÂY</span>
+          <h1 id="hero-title">Tài liệu của bạn,<br><em>thành dữ liệu rõ ràng.</em></h1>
+          <p>Tải hóa đơn hoặc bảng điểm lên, theo dõi quá trình xử lý và xem kết quả được trích xuất trong một nơi.</p>
+        </div>
+        <div class="hero-art" aria-hidden="true">
+          <div class="art-sheet sheet-back"></div>
+          <div class="art-sheet sheet-front">
+            <span class="art-line wide"></span><span class="art-line"></span>
+            <span class="art-line short"></span><span class="art-line wide"></span>
+            <span class="art-check">✓</span>
+          </div>
+          <div class="art-orbit orbit-one"></div><div class="art-orbit orbit-two"></div>
+        </div>
+      </section>
+
+      <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+
+      <section id="login-panel" class="panel login-panel" aria-labelledby="login-title">
+        <div>
+          <span class="section-kicker">BẮT ĐẦU</span>
+          <h2 id="login-title">Đăng nhập để tiếp tục</h2>
+          <p id="login-explanation">Tài liệu và kết quả của bạn chỉ hiển thị trong tài khoản của bạn.</p>
+        </div>
+        <button id="login-button" class="button button-primary" type="button">Đăng nhập <span aria-hidden="true">↗</span></button>
+      </section>
+
+      <div id="workspace" hidden>
+        <div class="workspace-grid">
+          <section class="panel upload-panel" aria-labelledby="upload-title">
+            <span class="section-kicker">01 · TẢI LÊN</span>
+            <h2 id="upload-title">Tài liệu mới</h2>
+            <p>Chọn loại tài liệu và tệp cần trích xuất.</p>
+            <form id="upload-form">
+              <label for="document-type">Loại tài liệu</label>
+              <select id="document-type" name="document-type" required>
+                <option value="INVOICE">Hóa đơn</option>
+                <option value="TRANSCRIPT">Bảng điểm</option>
+              </select>
+              <label for="document-file">Tệp PDF, JPG hoặc PNG</label>
+              <div class="file-wrap">
+                <input id="document-file" name="document-file" type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" required>
+                <small>Tối đa 10 MiB · Nội dung phải khớp định dạng tệp</small>
+              </div>
+              <button id="upload-button" class="button button-primary full" type="submit">Tải lên và xử lý <span aria-hidden="true">→</span></button>
+            </form>
+          </section>
+
+          <section class="panel documents-panel" aria-labelledby="documents-title">
+            <div class="section-heading">
+              <div><span class="section-kicker">02 · THEO DÕI</span><h2 id="documents-title">Tài liệu của tôi</h2></div>
+              <button id="refresh-button" class="button button-quiet" type="button">Làm mới</button>
+            </div>
+            <div id="documents-empty" class="empty-state">Chưa có tài liệu. Hãy tải lên tệp đầu tiên.</div>
+            <ul id="documents-list" class="documents-list" aria-label="Danh sách tài liệu"></ul>
+            <button id="more-button" class="button button-secondary full" type="button" hidden>Xem thêm</button>
+          </section>
+        </div>
+
+        <section id="result-panel" class="panel result-panel" aria-labelledby="result-title">
+          <div class="section-heading">
+            <div><span class="section-kicker">03 · KẾT QUẢ</span><h2 id="result-title">Chi tiết tài liệu</h2></div>
+            <span id="result-status" class="status-pill" hidden></span>
+          </div>
+          <div id="result-empty" class="empty-state">Chọn một tài liệu để xem trạng thái và kết quả.</div>
+          <div id="result-content" hidden></div>
+        </section>
+      </div>
+    </main>
+
+    <footer>Document Studio <span aria-hidden="true">·</span> Nhóm 6</footer>
+  </div>
+</body>
+</html>
