@@ -20,7 +20,7 @@ File này là bảng tiến độ chung của nhóm. Mỗi Pull Request hoàn th
 | Mã | Họ tên/GitHub | Vai trò             | Trạng thái hiện tại |
 | --- | --------------- | -------------------- | ----------------------- |
 | TV1 | Chưa điền    | Frontend & Auth      | Chưa bắt đầu        |
-| TV2 | Chưa điền    | Ingestion & Queue    | Chưa bắt đầu        |
+| TV2 | Chưa điền    | Ingestion & Queue    | Đã có mã/test local; chờ AWS Academy và PR/merge |
 | TV3 | Chưa điền    | Core OCR / AI        | Chưa bắt đầu        |
 | TV4 | Chưa điền    | Data & Orchestration | Chưa bắt đầu        |
 | TV5 | Chưa điền    | DevOps & Infra       | Chưa bắt đầu        |
@@ -42,8 +42,8 @@ File này là bảng tiến độ chung của nhóm. Mỗi Pull Request hoàn th
 
 Phụ trách: Nhóm trưởng điều phối, cả nhóm duyệt.
 
-- [X] Thống nhất thứ tự các giai đoạn.
-- [X] Thống nhất vai trò của TV1–TV5 theo `README.md`.
+- [ ] Thống nhất thứ tự các giai đoạn.
+- [ ] Thống nhất vai trò của TV1–TV5 theo `README.md`.
 - [ ] Chốt phạm vi bắt buộc của bản demo.
 - [ ] Chốt loại file, kích thước và số trang tối đa.
 - [ ] Chốt cấu trúc dữ liệu chung.
@@ -54,7 +54,16 @@ Phụ trách: Nhóm trưởng điều phối, cả nhóm duyệt.
 - [ ] Chốt message mà TV2 bàn giao cho TV4.
 - [ ] Chuẩn bị bộ test đã ẩn danh: tối thiểu 10 hóa đơn + 10 bảng điểm.
 
-Hoàn thành giai đoạn khi: TV1 có thể làm giao diện giả, TV2 có thể tạo message, TV3 có thể viết parser và TV4 có thể thiết kế database từ cùng một contract.
+### Điều kiện để chuyển sang Giai đoạn 1
+
+Không yêu cầu TV1–TV4 phải code xong. Chỉ xác nhận rằng các quy ước đã đủ rõ để mỗi người bắt đầu làm phần của mình mà không hiểu khác nhau.
+
+- [ ] TV1 xác nhận đã hiểu dữ liệu website sẽ gửi và nhận.
+- [ ] TV2 xác nhận đã hiểu cấu trúc message bàn giao cho TV4.
+- [ ] TV3 xác nhận đã hiểu kết quả mà hai parser phải tạo ra.
+- [ ] TV4 xác nhận đã hiểu dữ liệu cần lưu và các trạng thái.
+- [ ] TV5 xác nhận đã biết các tài nguyên AWS cần tạo.
+- [ ] Cả nhóm duyệt data contract, API contract và message contract.
 
 ---
 
@@ -89,6 +98,9 @@ Hoàn thành giai đoạn khi: TV1 có thể làm giao diện giả, TV2 có th�
 
 ### TV2 — Viết phần kiểm tra file
 
+> Triển khai local và bằng chứng kiểm thử: [TV2 — trạng thái Bước 0–13](docs/tv2/IMPLEMENTATION_STATUS.md).
+> Giữ các ô `[ ]` cho đến khi đạt tiêu chí test + merge theo quy tắc ở mục 1.
+
 - [ ] Viết quy tắc chấp nhận/từ chối file.
 - [ ] Tạo S3 event mẫu.
 - [ ] Viết hàm đọc và URL-decode S3 key.
@@ -99,15 +111,24 @@ Hoàn thành giai đoạn khi: TV1 có thể làm giao diện giả, TV2 có th�
 
 ### TV3 — Viết parser bằng dữ liệu mẫu
 
-- [ ] Chuẩn bị raw Textract JSON mẫu cho hóa đơn.
-- [ ] Chuẩn bị raw Textract JSON mẫu cho bảng điểm.
-- [ ] Viết parser hóa đơn khung.
-- [ ] Trích xuất vendor, date và total.
-- [ ] Trích xuất danh sách sản phẩm.
-- [ ] Viết parser bảng điểm khung.
-- [ ] Trích xuất thông tin sinh viên.
-- [ ] Trích xuất danh sách môn học.
-- [ ] Viết unit test cho trường hợp thiếu dữ liệu.
+> Cập nhật local 09/11/2026 trên nhánh `khoa/tv3`: 9 hạng mục
+> code/fixture đã hoàn thành và 6 unit test chạy thành công; còn bàn
+> giao kết quả cho TV4.
+
+- [x] Chuẩn bị raw Textract JSON mẫu cho hóa đơn.
+- [x] Chuẩn bị raw Textract JSON mẫu cho bảng điểm.
+- [x] Viết parser hóa đơn khung.
+- [x] Trích xuất vendor, date và total.
+- [x] Trích xuất danh sách sản phẩm.
+- [x] Viết parser bảng điểm khung.
+- [x] Trích xuất thông tin sinh viên.
+- [x] Trích xuất danh sách môn học.
+- [x] Viết unit test cho trường hợp thiếu dữ liệu.
+- [ ] Bàn giao cho TV4: PR/nhánh code, hai JSON kết quả mẫu trong
+  `tests/fixtures/expected/`, hai JSON Schema trong `lambdas/parse/schemas/`,
+  cấu trúc output `document_type`/`confidence`/`warnings`/`extracted`, lệnh chạy
+  test và kết quả 6 test thành công; TV4 xác nhận dùng được các mẫu này
+  để thiết kế Step Functions và lưu dữ liệu vào DynamoDB.
 
 ### TV4 — Thiết kế dữ liệu và quy trình
 
@@ -120,7 +141,13 @@ Hoàn thành giai đoạn khi: TV1 có thể làm giao diện giả, TV2 có th�
 - [ ] Thiết kế retry, timeout và failure path.
 - [ ] Tạo state machine bằng các Lambda giả.
 
-Hoàn thành giai đoạn khi: hạ tầng `dev` tối thiểu đã có; frontend hiển thị được mock data; validation, parser và state machine skeleton có test cơ bản.
+### Điều kiện để chuyển sang Giai đoạn 2
+
+- [ ] TV5 đã bàn giao hạ tầng `dev` tối thiểu.
+- [ ] TV1 hiển thị được mock invoice và transcript.
+- [ ] TV2 có validation skeleton và unit test cơ bản.
+- [ ] TV3 có hai parser skeleton chạy được trên fixture.
+- [ ] TV4 có state machine skeleton chạy được với kết quả giả.
 
 ---
 
@@ -147,11 +174,16 @@ Bàn giao cho TV4:
 - [ ] Có input mà Step Functions nhận được.
 - [ ] Có PR, cách test và bằng chứng log.
 
-Hoàn thành giai đoạn khi:
+### Điều kiện để chuyển sang Giai đoạn 3
+
+- [ ] File hợp lệ đi hết luồng sau:
 
 ```text
 Upload file → S3 → Validate → SQS → Workflow Starter
 ```
+
+- [ ] File không hợp lệ bị `REJECTED` và không đi vào Textract.
+- [ ] TV4 xác nhận đã nhận được input đúng contract từ TV2.
 
 ---
 
@@ -170,12 +202,17 @@ Phụ trách chính: TV4. Hỗ trợ: TV3 và TV5.
 - [ ] Tạo persistence adapter cập nhật DynamoDB.
 - [ ] Kiểm tra state machine bằng Lambda/kết quả giả.
 
-Hoàn thành giai đoạn khi:
+### Điều kiện để chuyển sang Giai đoạn 4
+
+- [ ] Luồng giả lập sau chạy được:
 
 ```text
 SQS message → Step Functions → PROCESSING
 → kết quả giả → SUCCEEDED/FAILED
 ```
+
+- [ ] Retry, timeout và Catch path đã được test bằng lỗi giả.
+- [ ] TV3 nhận được input và callback contract cần cho Textract.
 
 ---
 
@@ -252,13 +289,17 @@ Phụ trách chính: TV1. Hỗ trợ hạ tầng: TV5. Hỗ trợ dữ liệu: T
 - [ ] Frontend bucket không public.
 - [ ] CORS chỉ cho phép origin cần thiết.
 
-Hoàn thành giai đoạn khi:
+### Điều kiện để chuyển sang Giai đoạn 7
+
+- [ ] Luồng người dùng sau chạy được:
 
 ```text
 Đăng nhập → Upload → Processing → Xem kết quả
 ```
 
-hoạt động cho cả hóa đơn và bảng điểm.
+- [ ] Luồng trên hoạt động cho hóa đơn.
+- [ ] Luồng trên hoạt động cho bảng điểm.
+- [ ] TV5 nhận bàn giao danh sách log, metric và alarm cần hoàn thiện.
 
 ---
 

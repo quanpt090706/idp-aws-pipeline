@@ -1,0 +1,12 @@
+{
+  "region": "",
+  "expected_account_id": "",
+  "upload_bucket": "",
+  "documents_table": "",
+  "processing_queue_url": "",
+  "processing_dlq_url": "",
+  "validate_failures_queue_url": "",
+  "state_machine_arn": "",
+  "validate_function_name": "",
+  "starter_function_name": ""
+}

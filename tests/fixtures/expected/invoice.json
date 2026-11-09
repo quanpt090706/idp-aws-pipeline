@@ -1,0 +1,30 @@
+{
+  "document_type": "INVOICE",
+  "confidence": 96.6,
+  "warnings": [],
+  "extracted": {
+    "vendor_name": "Cua hang Demo",
+    "invoice_number": "HD-DEMO-001",
+    "invoice_date": "2026-11-06",
+    "currency": "VND",
+    "subtotal": 420000,
+    "tax_amount": 30000,
+    "total_amount": 450000,
+    "items": [
+      {
+        "description": "Sua tuoi",
+        "quantity": 2,
+        "unit_price": 30000,
+        "amount": 60000,
+        "confidence": 96.5
+      },
+      {
+        "description": "Banh demo",
+        "quantity": 3,
+        "unit_price": 120000,
+        "amount": 360000,
+        "confidence": 93.5
+      }
+    ]
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "DocumentMetadata": {"Pages": 1},
+  "Blocks": [
+    {"BlockType": "PAGE", "Id": "page-1", "Page": 1},
+
+    {"BlockType": "KEY_VALUE_SET", "EntityTypes": ["KEY"], "Id": "key-id", "Relationships": [{"Type": "CHILD", "Ids": ["word-key-id"]}, {"Type": "VALUE", "Ids": ["value-id"]}]},
+    {"BlockType": "WORD", "Id": "word-key-id", "Text": "MSSV", "Confidence": 99.0},
+    {"BlockType": "KEY_VALUE_SET", "EntityTypes": ["VALUE"], "Id": "value-id", "Relationships": [{"Type": "CHILD", "Ids": ["word-value-id"]}]},
+    {"BlockType": "WORD", "Id": "word-value-id", "Text": "SV-DEMO-001", "Confidence": 99.0},
+
+    {"BlockType": "KEY_VALUE_SET", "EntityTypes": ["KEY"], "Id": "key-name", "Relationships": [{"Type": "CHILD", "Ids": ["word-key-name-1", "word-key-name-2"]}, {"Type": "VALUE", "Ids": ["value-name"]}]},
+    {"BlockType": "WORD", "Id": "word-key-name-1", "Text": "Ho", "Confidence": 98.0},
+    {"BlockType": "WORD", "Id": "word-key-name-2", "Text": "ten", "Confidence": 98.0},
+    {"BlockType": "KEY_VALUE_SET", "EntityTypes": ["VALUE"], "Id": "value-name", "Relationships": [{"Type": "CHILD", "Ids": ["word-value-name-1", "word-value-name-2", "word-value-name-3"]}]},
+    {"BlockType": "WORD", "Id": "word-value-name-1", "Text": "Nguyen", "Confidence": 98.0},
+    {"BlockType": "WORD", "Id": "word-value-name-2", "Text": "Van", "Confidence": 98.0},
+    {"BlockType": "WORD", "Id": "word-value-name-3", "Text": "Demo", "Confidence": 98.0},
+
+    {"BlockType": "KEY_VALUE_SET", "EntityTypes": ["KEY"], "Id": "key-school", "Relationships": [{"Type": "CHILD", "Ids": ["word-key-school"]}, {"Type": "VALUE", "Ids": ["value-school"]}]},
+    {"BlockType": "WORD", "Id": "word-key-school", "Text": "Truong", "Confidence": 97.0},
+    {"BlockType": "KEY_VALUE_SET", "EntityTypes": ["VALUE"], "Id": "value-school", "Relationships": [{"Type": "CHILD", "Ids": ["word-value-school-1", "word-value-school-2", "word-value-school-3", "word-value-school-4"]}]},
+    {"BlockType": "WORD", "Id": "word-value-school-1", "Text": "Truong", "Confidence": 97.0},
+    {"BlockType": "WORD", "Id": "word-value-school-2", "Text": "Dai", "Confidence": 97.0},
+    {"BlockType": "WORD", "Id": "word-value-school-3", "Text": "hoc", "Confidence": 97.0},
+    {"BlockType": "WORD", "Id": "word-value-school-4", "Text": "Demo", "Confidence": 97.0},
+
+    {"BlockType": "KEY_VALUE_SET", "EntityTypes": ["KEY"], "Id": "key-year", "Relationships": [{"Type": "CHILD", "Ids": ["word-key-year-1", "word-key-year-2"]}, {"Type": "VALUE", "Ids": ["value-year"]}]},
+    {"BlockType": "WORD", "Id": "word-key-year-1", "Text": "Nam", "Confidence": 96.0},
+    {"BlockType": "WORD", "Id": "word-key-year-2", "Text": "hoc", "Confidence": 96.0},
+    {"BlockType": "KEY_VALUE_SET", "EntityTypes": ["VALUE"], "Id": "value-year", "Relationships": [{"Type": "CHILD", "Ids": ["word-value-year"]}]},
+    {"BlockType": "WORD", "Id": "word-value-year", "Text": "2025-2026", "Confidence": 96.0},
+
+    {"BlockType": "TABLE", "Id": "table-1", "Relationships": [{"Type": "CHILD", "Ids": ["cell-h1", "cell-h2", "cell-h3", "cell-h4", "cell-21", "cell-22", "cell-23", "cell-24", "cell-31", "cell-32", "cell-33", "cell-34"]}]},
+
+    {"BlockType": "CELL", "Id": "cell-h1", "RowIndex": 1, "ColumnIndex": 1, "Relationships": [{"Type": "CHILD", "Ids": ["word-h11", "word-h12"]}]},
+    {"BlockType": "WORD", "Id": "word-h11", "Text": "Ma", "Confidence": 99.0},
+    {"BlockType": "WORD", "Id": "word-h12", "Text": "mon", "Confidence": 99.0},
+    {"BlockType": "CELL", "Id": "cell-h2", "RowIndex": 1, "ColumnIndex": 2, "Relationships": [{"Type": "CHILD", "Ids": ["word-h21", "word-h22"]}]},
+    {"BlockType": "WORD", "Id": "word-h21", "Text": "Ten", "Confidence": 99.0},
+    {"BlockType": "WORD", "Id": "word-h22", "Text": "mon", "Confidence": 99.0},
+    {"BlockType": "CELL", "Id": "cell-h3", "RowIndex": 1, "ColumnIndex": 3, "Relationships": [{"Type": "CHILD", "Ids": ["word-h31", "word-h32"]}]},
+    {"BlockType": "WORD", "Id": "word-h31", "Text": "Tin", "Confidence": 99.0},
+    {"BlockType": "WORD", "Id": "word-h32", "Text": "chi", "Confidence": 99.0},
+    {"BlockType": "CELL", "Id": "cell-h4", "RowIndex": 1, "ColumnIndex": 4, "Relationships": [{"Type": "CHILD", "Ids": ["word-h4"]}]},
+    {"BlockType": "WORD", "Id": "word-h4", "Text": "Diem", "Confidence": 99.0},
+
+    {"BlockType": "CELL", "Id": "cell-21", "RowIndex": 2, "ColumnIndex": 1, "Relationships": [{"Type": "CHILD", "Ids": ["word-21"]}]},
+    {"BlockType": "WORD", "Id": "word-21", "Text": "IT001", "Confidence": 97.0},
+    {"BlockType": "CELL", "Id": "cell-22", "RowIndex": 2, "ColumnIndex": 2, "Relationships": [{"Type": "CHILD", "Ids": ["word-221", "word-222"]}]},
+    {"BlockType": "WORD", "Id": "word-221", "Text": "Lap", "Confidence": 96.0},
+    {"BlockType": "WORD", "Id": "word-222", "Text": "trinh", "Confidence": 96.0},
+    {"BlockType": "CELL", "Id": "cell-23", "RowIndex": 2, "ColumnIndex": 3, "Relationships": [{"Type": "CHILD", "Ids": ["word-23"]}]},
+    {"BlockType": "WORD", "Id": "word-23", "Text": "3", "Confidence": 95.0},
+    {"BlockType": "CELL", "Id": "cell-24", "RowIndex": 2, "ColumnIndex": 4, "Relationships": [{"Type": "CHILD", "Ids": ["word-24"]}]},
+    {"BlockType": "WORD", "Id": "word-24", "Text": "8,5", "Confidence": 94.0},
+
+    {"BlockType": "CELL", "Id": "cell-31", "RowIndex": 3, "ColumnIndex": 1, "Relationships": [{"Type": "CHILD", "Ids": ["word-31"]}]},
+    {"BlockType": "WORD", "Id": "word-31", "Text": "CS102", "Confidence": 93.0},
+    {"BlockType": "CELL", "Id": "cell-32", "RowIndex": 3, "ColumnIndex": 2, "Relationships": [{"Type": "CHILD", "Ids": ["word-321", "word-322", "word-323", "word-324"]}]},
+    {"BlockType": "WORD", "Id": "word-321", "Text": "Co", "Confidence": 92.0},
+    {"BlockType": "WORD", "Id": "word-322", "Text": "so", "Confidence": 92.0},
+    {"BlockType": "WORD", "Id": "word-323", "Text": "du", "Confidence": 92.0},
+    {"BlockType": "WORD", "Id": "word-324", "Text": "lieu", "Confidence": 92.0},
+    {"BlockType": "CELL", "Id": "cell-33", "RowIndex": 3, "ColumnIndex": 3, "Relationships": [{"Type": "CHILD", "Ids": ["word-33"]}]},
+    {"BlockType": "WORD", "Id": "word-33", "Text": "3", "Confidence": 91.0},
+    {"BlockType": "CELL", "Id": "cell-34", "RowIndex": 3, "ColumnIndex": 4, "Relationships": [{"Type": "CHILD", "Ids": ["word-34"]}]},
+    {"BlockType": "WORD", "Id": "word-34", "Text": "9.0", "Confidence": 90.0}
+  ]
+}
