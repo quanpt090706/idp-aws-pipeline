@@ -23,7 +23,12 @@ const config = {
 
 test("build configuration requires a complete HTTPS set for deployment", () => {
   assert.deepEqual(configFromEnv({}), { mode: "mock" });
+  assert.deepEqual(configFromEnv({ TV1_LOCAL_API_URL: "http://127.0.0.1:8000" }), {
+    mode: "local", apiUrl: "http://127.0.0.1:8000",
+  });
   assert.throws(() => configFromEnv({ TV1_DEPLOY: "1" }), /requires real/);
+  assert.throws(() => configFromEnv({ TV1_DEPLOY: "1", TV1_LOCAL_API_URL: "http://127.0.0.1:8000" }), /requires real/);
+  assert.throws(() => configFromEnv({ TV1_LOCAL_API_URL: "https://ocr.example.test" }), /Local OCR API/);
   assert.throws(() => configFromEnv({ TV1_API_URL: "https://api.example.test" }), /all three/);
   assert.throws(() => configFromEnv({
     TV1_API_URL: "http://api.example.test", TV1_COGNITO_DOMAIN: config.cognitoDomain,
@@ -73,6 +78,16 @@ test("API rejects expired session and surfaces server errors", async () => {
     ok: false, status: 400, json: async () => ({ error: "INVALID_FILE_NAME" }),
   }));
   await assert.rejects(rejected.detail("doc-1"), error => error.code === "INVALID_FILE_NAME");
+});
+
+test("local OCR API mode does not require or send a Cognito token", async () => {
+  const calls = [];
+  const local = new DocumentApi("http://127.0.0.1:8000", () => null, async (url, options) => {
+    calls.push({ url, options });
+    return { ok: true, json: async () => ({ documents: [], next_cursor: null }) };
+  }, false);
+  await local.list();
+  assert.equal(calls[0].options.headers.Authorization, undefined);
 });
 
 test("PKCE login checks state, stores ID token, and removes callback code", async () => {
