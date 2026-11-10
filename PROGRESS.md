@@ -242,6 +242,13 @@ Phụ trách chính: TV3. Hỗ trợ callback/data: TV4. Hỗ trợ quyền: TV5
 > đã được hiện thực và có 16 unit test handler chạy thành công.
 > Các ô code/test local được đánh dấu để bàn giao trên nhánh; ba ô cần
 > AWS thật vẫn giữ `[ ]` đến khi xác minh trên môi trường `dev`.
+>
+> Cập nhật local 10/11/2026: đã bổ sung wiring root Terraform cho biến môi
+> trường TV3, SNS → Parse Lambda, role Step Functions/Textract, TTL bảng
+> JobCallbacks và Lambda Notification; thêm công cụ smoke test AWS có chốt
+> `--confirm-dev-write`. Kết quả local: 309 Python tests + 5 subtests và 7
+> frontend tests pass, `terraform validate` thành công. Chưa chạy smoke AWS vì
+> máy hiện không có credentials/profile; ba ô AWS thật bên dưới vẫn để `[ ]`.
 
 ### Tài liệu TV3 phải bàn giao cho người phối hợp
 

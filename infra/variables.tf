@@ -36,6 +36,29 @@ variable "lab_role_arn" {
   default     = ""
 }
 
+variable "workflow_role_arn" {
+  description = "ARN role có trust states.amazonaws.com. Để trống sẽ dùng LabRole ở Academy hoặc role do Terraform tạo ngoài Academy."
+  type        = string
+  default     = ""
+}
+
+variable "textract_role_arn" {
+  description = "ARN role có trust textract.amazonaws.com và quyền publish SNS. Để trống sẽ dùng LabRole ở Academy hoặc role do Terraform tạo ngoài Academy."
+  type        = string
+  default     = ""
+}
+
+variable "confidence_threshold" {
+  description = "Ngưỡng confidence để TV3 gắn NEEDS_REVIEW."
+  type        = number
+  default     = 80
+
+  validation {
+    condition     = var.confidence_threshold >= 0 && var.confidence_threshold <= 100
+    error_message = "confidence_threshold phải nằm trong khoảng 0 đến 100."
+  }
+}
+
 ################################################################################
 # 3. Cấu hình vận hành và giám sát (DevOps)
 ################################################################################

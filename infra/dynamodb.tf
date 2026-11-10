@@ -42,7 +42,7 @@ resource "aws_dynamodb_table" "job_callbacks" {
 
   # Tính năng TTL tự động xóa bản ghi callback sau khi hết hạn để giữ bảng sạch
   ttl {
-    attribute_name = "ttl_expiry"
+    attribute_name = "ttl"
     enabled        = true
   }
 }
