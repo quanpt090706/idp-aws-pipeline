@@ -2,12 +2,23 @@ export function configFromEnv(env) {
   const apiUrl = env.TV1_API_URL?.trim() || "";
   const cognitoDomain = env.TV1_COGNITO_DOMAIN?.trim() || "";
   const clientId = env.TV1_COGNITO_CLIENT_ID?.trim() || "";
+  const localApiUrl = env.TV1_LOCAL_API_URL?.trim() || "";
   const supplied = [apiUrl, cognitoDomain, clientId].filter(Boolean).length;
+  if (localApiUrl && supplied) {
+    throw new Error("Do not combine TV1_LOCAL_API_URL with AWS configuration.");
+  }
   if (supplied !== 0 && supplied !== 3) {
     throw new Error("Set all three TV1_API_URL, TV1_COGNITO_DOMAIN and TV1_COGNITO_CLIENT_ID variables.");
   }
   if (env.TV1_DEPLOY === "1" && supplied !== 3) {
     throw new Error("A deployment build requires real API and Cognito configuration.");
+  }
+  if (localApiUrl) {
+    const local = new URL(localApiUrl);
+    if (local.protocol !== "http:" || !["127.0.0.1", "localhost"].includes(local.hostname)) {
+      throw new Error("Local OCR API must use an http://127.0.0.1 or http://localhost URL.");
+    }
+    return { mode: "local", apiUrl: local.origin };
   }
   if (!supplied) return { mode: "mock" };
   const api = new URL(apiUrl);

@@ -7,19 +7,20 @@ export class ApiError extends Error {
 }
 
 export class DocumentApi {
-  constructor(baseUrl, getToken, fetchImpl = globalThis.fetch.bind(globalThis)) {
+  constructor(baseUrl, getToken, fetchImpl = globalThis.fetch.bind(globalThis), requiresAuth = true) {
     this.baseUrl = baseUrl.replace(/\/$/, "");
     this.getToken = getToken;
     this.fetch = fetchImpl;
+    this.requiresAuth = requiresAuth;
   }
 
   async request(method, path, body) {
     const token = this.getToken();
-    if (!token) throw new ApiError("SESSION_EXPIRED", 401);
+    if (this.requiresAuth && !token) throw new ApiError("SESSION_EXPIRED", 401);
     const response = await this.fetch(`${this.baseUrl}${path}`, {
       method,
       headers: {
-        Authorization: `Bearer ${token}`,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...(body ? { "Content-Type": "application/json" } : {}),
       },
       ...(body ? { body: JSON.stringify(body) } : {}),

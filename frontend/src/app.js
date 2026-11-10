@@ -211,13 +211,23 @@ async function init() {
     const response = await fetch("/config.json", { cache: "no-store" });
     if (!response.ok) throw new Error("Không tải được cấu hình ứng dụng.");
     config = await response.json();
-    byId("mode-badge").textContent = config.mode === "mock" ? "Bản demo" : "Kết nối AWS";
+    byId("mode-badge").textContent = config.mode === "mock"
+      ? "Bản demo" : config.mode === "local" ? "OCR local" : "Kết nối AWS";
     byId("login-explanation").textContent = config.mode === "mock"
       ? "Đăng nhập demo để thử giao diện với dữ liệu mẫu."
-      : "Đăng nhập an toàn bằng tài khoản Cognito của bạn.";
+      : config.mode === "local"
+        ? "Chế độ phát triển: tài liệu được OCR trên máy, không gửi lên AWS."
+        : "Đăng nhập an toàn bằng tài khoản Cognito của bạn.";
     if (config.mode === "live") await completeLogin(config, storage, fetch.bind(window), location);
-    const loggedIn = config.mode === "mock" ? isMockLoggedIn(storage) : Boolean(idToken(storage));
-    api = config.mode === "mock" ? new MockApi(storage) : new DocumentApi(config.apiUrl, () => idToken(storage));
+    const loggedIn = config.mode === "live" ? Boolean(idToken(storage)) : isMockLoggedIn(storage);
+    api = config.mode === "mock"
+      ? new MockApi(storage)
+      : new DocumentApi(
+        config.apiUrl,
+        config.mode === "live" ? () => idToken(storage) : () => null,
+        fetch.bind(window),
+        config.mode === "live",
+      );
     showWorkspace(loggedIn);
     if (loggedIn) await loadDocuments();
   } catch (error) { handleError(error); }
@@ -226,7 +236,7 @@ async function init() {
 byId("login-button").addEventListener("click", async () => {
   try {
     showNotice("");
-    if (config.mode === "mock") {
+    if (config.mode !== "live") {
       mockLogin(storage);
       showWorkspace(true);
       await loadDocuments();

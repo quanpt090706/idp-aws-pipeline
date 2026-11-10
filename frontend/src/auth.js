@@ -74,7 +74,7 @@ export function clearSession(storage) { storage.removeItem(TOKEN_KEY); }
 
 export function logoutUrl(config, storage, location) {
   storage.removeItem(TOKEN_KEY);
-  if (config.mode === "mock") return null;
+  if (config.mode !== "live") return null;
   const url = new URL("/logout", config.cognitoDomain);
   url.search = new URLSearchParams({
     client_id: config.clientId, logout_uri: redirectUri(location),

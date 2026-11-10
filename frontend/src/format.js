@@ -42,7 +42,7 @@ export function validateFile(file) {
 
 export function documentMessage(doc) {
   if (doc.status === "REJECTED") return REJECT_LABELS[doc.reject_reason] || "Tệp không được chấp nhận.";
-  if (doc.status === "FAILED") return "Hệ thống chưa xử lý được tài liệu. Hãy thử lại sau.";
+  if (doc.status === "FAILED") return doc.error_message || "Hệ thống chưa xử lý được tài liệu. Hãy thử lại sau.";
   if (doc.status === "NEEDS_REVIEW") return "Kết quả cần được kiểm tra trước khi sử dụng.";
   return "";
 }
