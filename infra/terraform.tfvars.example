@@ -20,5 +20,13 @@ use_lab_role = true
 # (Lấy trong mục Details > Show > AWS CLI của Learner Lab)
 lab_role_arn = "arn:aws:iam::123456789012:role/LabRole"
 
+# Hai role dưới cần trust đúng service. Nếu LabRole của Academy không cho
+# Step Functions/Textract assume role, TV5 phải điền ARN role được lab cấp.
+workflow_role_arn = ""
+textract_role_arn = ""
+
+# Dưới ngưỡng này hoặc có warning thì kết quả được gắn NEEDS_REVIEW.
+confidence_threshold = 80
+
 # Giữ log CloudWatch 7 ngày để không vượt quota miễn phí
 log_retention_days = 7
