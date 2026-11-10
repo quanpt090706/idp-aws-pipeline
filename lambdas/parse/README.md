@@ -24,9 +24,10 @@ python3 -m lambdas.parse.local_run transcript tests/fixtures/textract/transcript
 
 ## Output contract tạm thời
 
-Parser trả object gồm `document_type`, `confidence`, `warnings` và `extracted` theo
-data contract trong `docs/personal/output.md`. Trường không tìm thấy là `null`; parser
-không bịa giá trị. Warning là object có tối thiểu `code`, `field`, `message`.
+Parser trả object gồm `document_type`, `confidence`, `warnings` và `extracted`
+theo data contract trong `docs/tv3/OUTPUT_CONTRACT.md`. Trường không tìm thấy
+là `null`; parser không bịa giá trị. Warning là object có tối thiểu `code`,
+`field`, `message`.
 
 Ngưỡng confidence mặc định là `80.0`. Lambda Parse trả
 `NEEDS_REVIEW` khi có warning hoặc confidence thấp hơn ngưỡng; nhóm có thể

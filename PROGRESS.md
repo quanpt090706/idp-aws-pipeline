@@ -249,6 +249,33 @@ Phụ trách chính: TV3. Hỗ trợ callback/data: TV4. Hỗ trợ quyền: TV5
 > `--confirm-dev-write`. Kết quả local: 309 Python tests + 5 subtests và 7
 > frontend tests pass, `terraform validate` thành công. Chưa chạy smoke AWS vì
 > máy hiện không có credentials/profile; ba ô AWS thật bên dưới vẫn để `[ ]`.
+>
+> Phương án tạm thời 10/11/2026 khi AWS Academy Cloud Foundations Sandbox không
+> cấp Amazon Textract/SQS/Step Functions/DynamoDB: thêm adapter OCR local cho
+> hóa đơn tiếng Anh tại `tools/local_ocr/` và hướng dẫn
+> `docs/tv3/OCR_LOCAL_TAM_THOI.md`. Adapter đọc dữ liệu thật từ PDF/JPG/PNG và trả
+> cùng normalized contract cho frontend, nhưng **không phải Textract** và không
+> làm thay đổi trạng thái ba checklist AWS thật bên dưới. Mã AWS vẫn được giữ
+> nguyên để chuyển lại khi được cấp Learner Lab phù hợp.
+
+### Phương án phát triển tạm thời — OCR local
+
+- [x] Tách OCR local khỏi handler Textract để không phải viết lại luồng AWS.
+- [x] PDF có lớp chữ được đọc bằng `pdftotext` và trả normalized invoice JSON.
+- [x] Chuẩn bị đường xử lý JPG/PNG/PDF scan bằng Tesseract.
+- [x] Thêm chế độ frontend `OCR local`, không dùng fixture cố định.
+- [x] Ghi rõ hướng dẫn, giới hạn và cách chuyển lại AWS tại
+  `docs/tv3/OCR_LOCAL_TAM_THOI.md`.
+- [x] Smoke test local API với `aws_random_invoice_1.pdf`: đọc đúng vendor,
+  invoice number, ngày, tổng tiền và 4 dòng hàng; toàn bộ `311` Python tests +
+  `5` subtests và `8` frontend tests pass.
+- [x] Cài Tesseract và xác nhận `aws_sample_invoice.png` được OCR thật bằng
+  Tesseract `5.5.0`; confidence chữ `87.29%`, kết quả `NEEDS_REVIEW` vì parser
+  local còn thiếu tổng tiền và dòng hàng trên mẫu ảnh này.
+- [ ] Chạy end-to-end từ nút upload với bộ hóa đơn demo và ghi accuracy report.
+- [ ] Bổ sung OCR local cho bảng điểm nếu nhóm cần demo trước khi có AWS.
+- [ ] Khi được cấp AWS phù hợp, tắt local adapter và chạy đủ ba checklist AWS
+  thật của Giai đoạn 4.
 
 ### Tài liệu TV3 phải bàn giao cho người phối hợp
 

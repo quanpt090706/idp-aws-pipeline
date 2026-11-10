@@ -20,6 +20,20 @@ the browser session and finish processing after a short delay. The result
 fixtures are copied from `tests/fixtures/expected/` during build. A mock build
 must not be deployed as the real application.
 
+## Local OCR with a real English invoice
+
+When AWS Academy has not granted Textract, the temporary local adapter can read
+the actual uploaded invoice instead of returning a fixture. Follow
+[`docs/tv3/OCR_LOCAL_TAM_THOI.md`](../docs/tv3/OCR_LOCAL_TAM_THOI.md). Start the local
+API, then run the frontend with:
+
+```bash
+TV1_LOCAL_API_URL=http://127.0.0.1:8000 npm run dev
+```
+
+The badge must say `OCR local`. This mode bypasses Cognito and must never be
+published as the production site or counted as an AWS Textract verification.
+
 ## Real AWS configuration
 
 The companion API/IaC branch provides these Terraform outputs:

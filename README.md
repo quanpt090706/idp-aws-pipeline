@@ -130,14 +130,18 @@ idp-aws-pipeline/
 │   └── parse/              # Xử lý kết quả Textract
 ├── infra/                  # Terraform / CDK
 │   └── step_functions/     # Định nghĩa state machine (ASL JSON)
-├── tests/                  # Unit test cho từng Lambda
-├── scripts/                # Build ZIP, preflight và smoke test TV2
+├── tests/                  # Unit/integration test, gồm tests/tv3/test_local_ocr.py
+├── scripts/                # Build, preflight và smoke test AWS
+├── tools/
+│   └── local_ocr/          # OCR/API chỉ dùng để phát triển local
 ├── requirements-dev.txt    # Dependency local đã khóa phiên bản
 ├── docs/                   # Tài liệu kỹ thuật chi tiết
+│   ├── README.md           # Bản đồ tài liệu cho người mới
 │   ├── flows/              # Sequence diagram từng luồng xử lý
 │   │   ├── upload-flow.md
 │   │   ├── textract-async-flow.md
 │   │   └── error-handling-flow.md
+│   ├── tv3/                # Tài liệu TV3: contract, Textract và OCR local
 │   └── data-model.md       # DynamoDB schema + cấu trúc JSON Textract
 └── README.md
 ```
