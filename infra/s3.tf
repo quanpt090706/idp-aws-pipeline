@@ -55,3 +55,28 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "results" {
     }
   }
 }
+
+# 3. Kích hoạt Lambda Validate khi có file mới trong thư mục uploads/
+#
+# Cố ý chỉ lọc theo prefix, không lọc theo đuôi file: file sai định dạng vẫn
+# phải đi vào Validate để được ghi REJECTED kèm lý do. Nếu lọc theo đuôi file,
+# các file đó sẽ nằm mãi ở UPLOAD_PENDING và người dùng không thấy phản hồi.
+resource "aws_lambda_permission" "s3_invoke_validate" {
+  statement_id  = "AllowS3InvokeValidate"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.validate.function_name
+  principal     = "s3.amazonaws.com"
+  source_arn    = aws_s3_bucket.upload.arn
+}
+
+resource "aws_s3_bucket_notification" "upload" {
+  bucket = aws_s3_bucket.upload.id
+
+  lambda_function {
+    lambda_function_arn = aws_lambda_function.validate.arn
+    events              = ["s3:ObjectCreated:*"]
+    filter_prefix       = "uploads/"
+  }
+
+  depends_on = [aws_lambda_permission.s3_invoke_validate]
+}

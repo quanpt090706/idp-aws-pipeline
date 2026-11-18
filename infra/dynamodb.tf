@@ -24,8 +24,41 @@ resource "aws_dynamodb_table" "documents" {
     type = "S"
   }
 
-  # Lưu ý: Các chỉ mục phụ (GSI) như GSI-status và GSI-type sẽ được TV4 và TV5
-  # bổ sung khi TV4 chốt đầy đủ các mẫu truy vấn (query patterns).
+  attribute {
+    name = "status"
+    type = "S"
+  }
+
+  attribute {
+    name = "document_type"
+    type = "S"
+  }
+
+  attribute {
+    name = "created_at"
+    type = "S"
+  }
+
+  # GSI-status: lọc danh sách tài liệu theo trạng thái (TV1/TV4).
+  global_secondary_index {
+    name            = "GSI-status"
+    hash_key        = "status"
+    range_key       = "created_at"
+    projection_type = "ALL"
+  }
+
+  # GSI-type: lọc danh sách tài liệu theo loại INVOICE/TRANSCRIPT.
+  global_secondary_index {
+    name            = "GSI-type"
+    hash_key        = "document_type"
+    range_key       = "created_at"
+    projection_type = "ALL"
+  }
+
+  # PITR: khôi phục bảng về thời điểm trước khi bị ghi/xóa nhầm.
+  point_in_time_recovery {
+    enabled = true
+  }
 }
 
 # 2. Bảng quản lý Job Callbacks cho Step Functions và Textract Async

@@ -37,3 +37,20 @@ resource "aws_sqs_queue_redrive_allow_policy" "processing_dlq" {
     sourceQueueArns   = [aws_sqs_queue.processing.arn]
   })
 }
+
+# 3. Nối Processing Queue với Lambda Workflow Starter
+#
+# batch_size = 5 + ReportBatchItemFailures: message lỗi tạm thời được trả lại
+# queue, các message còn lại trong batch vẫn được xử lý bình thường.
+resource "aws_lambda_event_source_mapping" "starter" {
+  event_source_arn                   = aws_sqs_queue.processing.arn
+  function_name                      = aws_lambda_function.workflow_starter.arn
+  enabled                            = true
+  batch_size                         = 5
+  maximum_batching_window_in_seconds = 0
+  function_response_types            = ["ReportBatchItemFailures"]
+
+  scaling_config {
+    maximum_concurrency = 5
+  }
+}
