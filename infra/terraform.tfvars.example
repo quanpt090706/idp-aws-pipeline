@@ -26,3 +26,6 @@ confidence_threshold = 80
 
 # Giữ log CloudWatch 7 ngày để tiết kiệm chi phí.
 log_retention_days = 7
+
+# Email đã verify trong SES, dùng cho cả sender và recipient chung.
+notification_email = "your-verified-email@gmail.com"

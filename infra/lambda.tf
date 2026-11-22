@@ -172,7 +172,9 @@ resource "aws_lambda_function" "notification" {
 
   environment {
     variables = {
-      DOCUMENTS_TABLE = aws_dynamodb_table.documents.name
+      DOCUMENTS_TABLE         = aws_dynamodb_table.documents.name
+      SENDER_EMAIL            = var.notification_email
+      DEMO_NOTIFICATION_EMAIL = var.notification_email
     }
   }
 }

@@ -68,3 +68,13 @@ variable "log_retention_days" {
   type        = number
   default     = 7
 }
+
+variable "notification_email" {
+  description = "Email đã xác thực trong SES, dùng làm sender và recipient chung cho thông báo kết quả."
+  type        = string
+
+  validation {
+    condition     = length(trimspace(var.notification_email)) > 0 && can(regex("^[^@[:space:]]+@[^@[:space:]]+\\.[^@[:space:]]+$", var.notification_email))
+    error_message = "notification_email phải là địa chỉ email đã verify trong SES."
+  }
+}
