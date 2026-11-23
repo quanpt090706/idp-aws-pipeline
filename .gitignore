@@ -43,3 +43,6 @@ build/
 htmlcov/
 tests/samples/
 *.tfplan
+
+# TV3 local
+.local-ocr/
