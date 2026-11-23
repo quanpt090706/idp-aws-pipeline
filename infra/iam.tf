@@ -97,6 +97,27 @@ resource "aws_iam_role_policy" "lambda_pipeline" {
         Resource = "${aws_s3_bucket.results.arn}/*"
       },
       {
+        Effect = "Allow"
+        Action = [
+          "sqs:SendMessage",
+          "sqs:ReceiveMessage",
+          "sqs:DeleteMessage",
+          "sqs:GetQueueAttributes"
+        ]
+        Resource = [
+          aws_sqs_queue.processing.arn,
+          aws_sqs_queue.ingestion_dlq.arn
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "states:StartExecution",
+          "states:DescribeExecution"
+        ]
+        Resource = "${replace(aws_sfn_state_machine.pipeline.arn, ":stateMachine:", ":execution:")}:*"
+      },
+      {
         Effect   = "Allow"
         Action   = ["states:SendTaskSuccess", "states:SendTaskFailure"]
         Resource = "*"

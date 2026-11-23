@@ -1,10 +1,12 @@
 ################################################################################
-# COMPUTE LAYER (LAMBDA SKELETONS)
+# COMPUTE LAYER (LAMBDA)
 #
-# Quản lý 3 Lambda Function chính của pipeline:
+# Quản lý các Lambda Function chính của pipeline:
 # 1. Validate: Kiểm tra định dạng & dung lượng file upload (TV2)
-# 2. Start-Job: Kích hoạt Amazon Textract Async (TV3)
-# 3. Parse: Xử lý và trích xuất JSON Textract (TV3)
+# 2. Workflow Starter: Nhận SQS và khởi động Step Functions (TV2)
+# 3. Start-Job: Kích hoạt Amazon Textract Async (TV3)
+# 4. Parse: Xử lý và trích xuất JSON Textract (TV3)
+# 5. Notification: Gửi email kết quả (TV4)
 ################################################################################
 
 # 1. Đóng gói mã nguồn từng Lambda thành file ZIP tự động
@@ -24,6 +26,12 @@ data "archive_file" "parse_zip" {
   type        = "zip"
   source_dir  = "${path.module}/../lambdas/parse"
   output_path = "${path.module}/build/parse.zip"
+}
+
+data "archive_file" "workflow_starter_zip" {
+  type        = "zip"
+  source_dir  = "${path.module}/../lambdas/workflow-starter"
+  output_path = "${path.module}/build/workflow_starter.zip"
 }
 
 data "archive_file" "notification_zip" {
@@ -58,8 +66,15 @@ resource "aws_iam_role_policy_attachment" "lambda_basic" {
 }
 
 locals {
-  # Chọn role ARN: Dùng LabRole nếu use_lab_role = true, ngược lại dùng role tự tạo
-  lambda_role_arn = var.use_lab_role ? (var.lab_role_arn != "" ? var.lab_role_arn : "arn:aws:iam::123456789012:role/LabRole") : (length(aws_iam_role.lambda_exec) > 0 ? aws_iam_role.lambda_exec[0].arn : "")
+  # AWS cá nhân: Terraform tự tạo role. AWS Academy: dùng LabRole có sẵn.
+  lambda_role_arn = var.use_lab_role ? var.lab_role_arn : one(aws_iam_role.lambda_exec[*].arn)
+}
+
+check "lab_role_configured" {
+  assert {
+    condition     = !var.use_lab_role || var.lab_role_arn != ""
+    error_message = "use_lab_role = true yêu cầu lab_role_arn. Với tài khoản AWS cá nhân, đặt use_lab_role = false."
+  }
 }
 
 # 3. Lambda Validate Function
@@ -74,8 +89,32 @@ resource "aws_lambda_function" "validate" {
 
   environment {
     variables = {
-      SQS_QUEUE_URL = aws_sqs_queue.processing.url
-      SQS_DLQ_URL   = aws_sqs_queue.ingestion_dlq.url
+      DOCUMENTS_TABLE     = aws_dynamodb_table.documents.name
+      QUEUE_URL           = aws_sqs_queue.processing.url
+      UPLOAD_BUCKET       = aws_s3_bucket.upload.id
+      UPLOAD_PREFIX       = "uploads/"
+      MAX_FILE_SIZE_BYTES = "10485760"
+    }
+  }
+}
+
+# 4. Lambda Workflow Starter (TV2): nhận message từ SQS và khởi động Step Functions
+resource "aws_lambda_function" "workflow_starter" {
+  function_name    = "${local.name_prefix}-workflow-starter"
+  filename         = data.archive_file.workflow_starter_zip.output_path
+  source_code_hash = data.archive_file.workflow_starter_zip.output_base64sha256
+  handler          = "app.lambda_handler"
+  runtime          = "python3.12"
+  role             = local.lambda_role_arn
+  timeout          = 30
+  memory_size      = 128
+
+  environment {
+    variables = {
+      DOCUMENTS_TABLE   = aws_dynamodb_table.documents.name
+      STATE_MACHINE_ARN = aws_sfn_state_machine.pipeline.arn
+      UPLOAD_BUCKET     = aws_s3_bucket.upload.id
+      UPLOAD_PREFIX     = "uploads/"
     }
   }
 }
@@ -133,7 +172,9 @@ resource "aws_lambda_function" "notification" {
 
   environment {
     variables = {
-      DOCUMENTS_TABLE = aws_dynamodb_table.documents.name
+      DOCUMENTS_TABLE         = aws_dynamodb_table.documents.name
+      SENDER_EMAIL            = var.notification_email
+      DEMO_NOTIFICATION_EMAIL = var.notification_email
     }
   }
 }

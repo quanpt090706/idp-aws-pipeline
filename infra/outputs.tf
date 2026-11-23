@@ -105,6 +105,11 @@ output "lambda_validate_arn" {
   value       = aws_lambda_function.validate.arn
 }
 
+output "lambda_workflow_starter_arn" {
+  description = "ARN của Lambda Workflow Starter"
+  value       = aws_lambda_function.workflow_starter.arn
+}
+
 output "lambda_start_job_arn" {
   description = "ARN của Lambda Start-Job"
   value       = aws_lambda_function.start_job.arn

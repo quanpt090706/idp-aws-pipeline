@@ -2,10 +2,10 @@ data "aws_caller_identity" "current" {}
 data "aws_partition" "current" {}
 
 locals {
-  account_id   = data.aws_caller_identity.current.account_id
-  partition    = data.aws_partition.current.partition
-  table_arn    = "arn:${local.partition}:dynamodb:${var.region}:${local.account_id}:table/${local.documents_table_name}"
-  sfn_role_name = element(reverse(split("/", var.workflow_role_arn)), 0)
+  account_id       = data.aws_caller_identity.current.account_id
+  partition        = data.aws_partition.current.partition
+  table_arn        = "arn:${local.partition}:dynamodb:${var.region}:${local.account_id}:table/${local.documents_table_name}"
+  sfn_role_name    = element(reverse(split("/", var.workflow_role_arn)), 0)
   lambda_role_name = element(reverse(split("/", var.lambda_role_arn != "" ? var.lambda_role_arn : var.workflow_role_arn)), 0)
 }
 

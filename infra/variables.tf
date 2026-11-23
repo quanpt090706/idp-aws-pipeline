@@ -3,7 +3,7 @@
 ################################################################################
 
 variable "aws_region" {
-  description = "AWS Region dùng cho dự án (AWS Academy Learner Lab bắt buộc us-east-1)"
+  description = "AWS Region dùng cho dự án (khuyến nghị us-east-1 cho tài khoản cá nhân)"
   type        = string
   default     = "us-east-1"
 }
@@ -21,17 +21,17 @@ variable "environment" {
 }
 
 ################################################################################
-# 2. Cấu hình tương thích AWS Academy Learner Lab vs Tài khoản cá nhân
+# 2. Cấu hình AWS Academy Learner Lab vs tài khoản AWS cá nhân
 ################################################################################
 
 variable "use_lab_role" {
-  description = "Bật true nếu dùng tài khoản AWS Academy (để tái sử dụng LabRole, không tạo mới IAM Role)"
+  description = "Chỉ bật true khi dùng AWS Academy Learner Lab và muốn tái sử dụng LabRole. Tài khoản cá nhân để false để Terraform tự tạo IAM Role."
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "lab_role_arn" {
-  description = "ARN của LabRole trong AWS Academy (vd: arn:aws:iam::123456789012:role/LabRole)"
+  description = "ARN của LabRole trong AWS Academy (chỉ dùng khi use_lab_role = true)."
   type        = string
   default     = ""
 }
@@ -64,7 +64,17 @@ variable "confidence_threshold" {
 ################################################################################
 
 variable "log_retention_days" {
-  description = "Số ngày lưu log CloudWatch (đặt 7 ngày để tối ưu chi phí, tránh vượt quota Lab)"
+  description = "Số ngày lưu log CloudWatch (đặt 7 ngày để tối ưu chi phí)"
   type        = number
   default     = 7
+}
+
+variable "notification_email" {
+  description = "Email đã xác thực trong SES, dùng làm sender và recipient chung cho thông báo kết quả."
+  type        = string
+
+  validation {
+    condition     = length(trimspace(var.notification_email)) > 0 && can(regex("^[^@[:space:]]+@[^@[:space:]]+\\.[^@[:space:]]+$", var.notification_email))
+    error_message = "notification_email phải là địa chỉ email đã verify trong SES."
+  }
 }

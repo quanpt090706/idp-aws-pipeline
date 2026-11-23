@@ -1,32 +1,31 @@
 # ==============================================================================
-# FILE CẤU HÌNH MẪU (TERRAFORM TFVARS EXAMPLE)
+# FILE CẤU HÌNH MẪU CHO TÀI KHOẢN AWS CÁ NHÂN
 #
 # Hướng dẫn sử dụng:
 # 1. Copy file này thành `terraform.tfvars`:
 #    cp terraform.tfvars.example terraform.tfvars
 # 2. File `terraform.tfvars` đã nằm trong .gitignore nên không bị lộ lên GitHub.
+# 3. Điền đúng region và account của bạn trước khi chạy `terraform plan`.
 # ==============================================================================
 
-# Region bắt buộc cho AWS Academy Learner Lab
 aws_region   = "us-east-1"
 project_name = "idp"
 environment  = "dev"
 
-# Cấu hình cho AWS Academy:
-# Bật true để Terraform sử dụng LabRole có sẵn thay vì cố tạo Role mới (tránh lỗi cấm quyền)
-use_lab_role = true
+# Tài khoản cá nhân: để false để Terraform tự tạo IAM Role cho Lambda,
+# Step Functions và Textract.
+use_lab_role = false
 
-# Thay Account ID của bạn vào ARN bên dưới khi khởi động Learner Lab:
-# (Lấy trong mục Details > Show > AWS CLI của Learner Lab)
-lab_role_arn = "arn:aws:iam::123456789012:role/LabRole"
-
-# Hai role dưới cần trust đúng service. Nếu LabRole của Academy không cho
-# Step Functions/Textract assume role, TV5 phải điền ARN role được lab cấp.
+# Không cần điền khi use_lab_role = false.
+lab_role_arn      = ""
 workflow_role_arn = ""
 textract_role_arn = ""
 
 # Dưới ngưỡng này hoặc có warning thì kết quả được gắn NEEDS_REVIEW.
 confidence_threshold = 80
 
-# Giữ log CloudWatch 7 ngày để không vượt quota miễn phí
+# Giữ log CloudWatch 7 ngày để tiết kiệm chi phí.
 log_retention_days = 7
+
+# Email đã verify trong SES, dùng cho cả sender và recipient chung.
+notification_email = "your-verified-email@gmail.com"
