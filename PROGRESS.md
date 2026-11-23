@@ -12,6 +12,12 @@ File này là bảng tiến độ chung của nhóm. Mỗi Pull Request hoàn th
 - `[ ]`: chưa hoàn thành.
 - `[x]`: đã hoàn thành, đã test và đã merge vào `main`.
 - Mỗi thành viên chịu trách nhiệm cập nhật task của mình trong cùng PR.
+- Nếu một task tạo `README`, contract, runbook hoặc fixture mà thành viên
+  khác bắt buộc phải dùng, người bàn giao phải ghi vào `PROGRESS.md`:
+  người nhận, đường dẫn file, mục đích cần đọc và ô xác nhận.
+- Trước khi làm phần tích hợp, thành viên và trợ lý code phải bắt
+  đầu từ `PROGRESS.md`, sau đó đọc các file được gắn cho mình trong
+  checklist bàn giao; không chỉ tìm `README.md` theo phỏng đoán.
 
 ---
 
@@ -19,9 +25,9 @@ File này là bảng tiến độ chung của nhóm. Mỗi Pull Request hoàn th
 
 | Mã | Họ tên/GitHub | Vai trò             | Trạng thái hiện tại |
 | --- | --------------- | -------------------- | ----------------------- |
-| TV1 | Chưa điền    | Frontend & Auth      | Chưa bắt đầu        |
+| TV1 | Chưa điền    | Frontend & Auth      | Đã có mã/test local trên PR #4 và #5; chờ review, merge và kiểm thử AWS |
 | TV2 | Chưa điền    | Ingestion & Queue    | Đã có mã/test local; chờ AWS Academy và PR/merge |
-| TV3 | Chưa điền    | Core OCR / AI        | Chưa bắt đầu        |
+| TV3 | Chưa điền    | Core OCR / AI        | Parser đã merge; hai handler Giai đoạn 4 đã code/test local, chờ PR và AWS `dev` |
 | TV4 | Chưa điền    | Data & Orchestration | Chưa bắt đầu        |
 | TV5 | Chưa điền    | DevOps & Infra       | Chưa bắt đầu        |
 
@@ -87,6 +93,14 @@ Không yêu cầu TV1–TV4 phải code xong. Chỉ xác nhận rằng các quy 
 
 ### TV1 — Làm giao diện bằng dữ liệu giả
 
+> Cập nhật 09/11/2026 — [PR #5](https://github.com/quanpt090706/idp-aws-pipeline/pull/5)
+> đã đưa lên nhánh `feature/tv1-frontend`: giao diện login → upload → processing
+> → invoice/transcript result, chế độ mock dùng fixture có sẵn và chế độ
+> Cognito/API thật. `npm test` đạt 7 test, build mock/live thành công, smoke
+> test trên Edge đi hết hai loại tài liệu và CI frontend đạt. Chưa chạy luồng
+> end-to-end trên AWS; frontend phụ thuộc API/IaC ở PR #4. Giữ các ô `[ ]` theo
+> quy tắc ở mục 1 cho tới khi PR được review và merge.
+
 - [ ] Vẽ luồng login → upload → processing → result.
 - [ ] Tạo frontend skeleton và lệnh build.
 - [ ] Làm trang đăng nhập giả.
@@ -129,6 +143,10 @@ Không yêu cầu TV1–TV4 phải code xong. Chỉ xác nhận rằng các quy 
   cấu trúc output `document_type`/`confidence`/`warnings`/`extracted`, lệnh chạy
   test và kết quả 6 test thành công; TV4 xác nhận dùng được các mẫu này
   để thiết kế Step Functions và lưu dữ liệu vào DynamoDB.
+- [ ] TV4 đọc `lambdas/parse/README.md` (mục **Output contract tạm thời**),
+  `tests/fixtures/expected/invoice.json` và
+  `tests/fixtures/expected/transcript.json`; xác nhận tên field phù hợp với
+  state machine và DynamoDB trước khi tích hợp.
 
 ### TV4 — Thiết kế dữ liệu và quy trình
 
@@ -220,21 +238,48 @@ SQS message → Step Functions → PROCESSING
 
 Phụ trách chính: TV3. Hỗ trợ callback/data: TV4. Hỗ trợ quyền: TV5.
 
+> Cập nhật local 09/11/2026 trên nhánh `khoa/tv3`: hai handler Giai đoạn 4
+> đã được hiện thực và có 16 unit test handler chạy thành công.
+> Các ô code/test local được đánh dấu để bàn giao trên nhánh; ba ô cần
+> AWS thật vẫn giữ `[ ]` đến khi xác minh trên môi trường `dev`.
+>
+> Cập nhật local 10/11/2026: đã bổ sung wiring root Terraform cho biến môi
+> trường TV3, SNS → Parse Lambda, role Step Functions/Textract, TTL bảng
+> JobCallbacks và Lambda Notification; thêm công cụ smoke test AWS có chốt
+> `--confirm-dev-write`. Kết quả local: 309 Python tests + 5 subtests và 7
+> frontend tests pass, `terraform validate` thành công. Chưa chạy smoke AWS vì
+> máy hiện không có credentials/profile; ba ô AWS thật bên dưới vẫn để `[ ]`.
+
+### Tài liệu TV3 phải bàn giao cho người phối hợp
+
+- [ ] **TV4** đọc `lambdas/parse/README.md`, `docs/tv4/CONTRACT.md` và hai
+  handler `lambdas/start-job/handler.py`, `lambdas/parse/handler.py`; xác nhận
+  payload callback gồm `status`, `s3_result_key`, `confidence`, `extracted`,
+  `warnings` dùng được trong Step Functions.
+- [ ] **TV5** đọc `lambdas/parse/README.md`, mục
+  **Cấu hình AWS cần được TV5 cung cấp**, và
+  `docs/tv4/CONTRACT.md`, mục **Giao diện bảng phụ JobCallbacks**; xác nhận
+  đã cấu hình biến môi trường, IAM, SNS subscription, S3 Results và
+  bảng JobCallbacks cho hai Lambda TV3.
+- [ ] **TV4 và TV5** phản hồi ngay trong PR TV3 hoặc nhóm chat rằng đã
+  đọc các file trên; nếu contract hoặc tên biến không khớp thì chốt
+  một tên chung trước khi deploy.
+
 - [ ] Chạy thử `StartExpenseAnalysis` với một hóa đơn.
 - [ ] Chạy thử `StartDocumentAnalysis` với một bảng điểm.
-- [ ] Viết Lambda Start Textract Job.
-- [ ] Lưu `job_id`, `document_id`, callback token và TTL.
+- [x] Viết Lambda Start Textract Job.
+- [x] Lưu `job_id`, `document_id`, callback token và TTL.
 - [ ] Textract gửi thông báo hoàn thành qua SNS.
-- [ ] Viết Lambda nhận SNS callback.
-- [ ] Lấy đủ các trang kết quả Textract.
-- [ ] Lưu raw JSON vào S3 Results.
-- [ ] Không truyền raw JSON lớn qua Step Functions/DynamoDB.
-- [ ] Hoàn thiện parser hóa đơn.
-- [ ] Hoàn thiện parser bảng điểm.
-- [ ] Tính confidence và warnings.
-- [ ] Gắn `NEEDS_REVIEW` khi thiếu trường hoặc confidence thấp.
-- [ ] Callback thành công làm Step Functions tiếp tục.
-- [ ] Callback thất bại làm Step Functions đi vào nhánh lỗi.
+- [x] Viết Lambda nhận SNS callback.
+- [x] Lấy đủ các trang kết quả Textract.
+- [x] Lưu raw JSON vào S3 Results.
+- [x] Không truyền raw JSON lớn qua Step Functions/DynamoDB.
+- [x] Hoàn thiện parser hóa đơn.
+- [x] Hoàn thiện parser bảng điểm.
+- [x] Tính confidence và warnings.
+- [x] Gắn `NEEDS_REVIEW` khi thiếu trường hoặc confidence thấp.
+- [x] Callback thành công làm Step Functions tiếp tục.
+- [x] Callback thất bại làm Step Functions đi vào nhánh lỗi.
 
 Bàn giao cho TV4:
 
@@ -271,6 +316,14 @@ Bàn giao cho TV1:
 ## 10. Giai đoạn 6 — TV1 kết nối website thật
 
 Phụ trách chính: TV1. Hỗ trợ hạ tầng: TV5. Hỗ trợ dữ liệu: TV4.
+
+> Cập nhật 09/11/2026 — [PR #4](https://github.com/quanpt090706/idp-aws-pipeline/pull/4)
+> đã đưa lên nhánh `feature/tv1-document-api`: Cognito, API Gateway JWT,
+> Lambda tạo bản ghi `UPLOAD_PENDING` và presigned URL, API danh sách/chi tiết
+> theo `user_id`, Terraform frontend bucket private/CloudFront/CORS. Đã chạy
+> 284 test Python, `terraform validate` và CI thành công. Chưa apply hoặc smoke
+> test trên AWS vì môi trường hiện tại chưa có credentials; cần xác nhận tích hợp
+> TV2/TV4. Các ô bên dưới vẫn `[ ]` theo quy tắc ở mục 1 vì PR chưa merge.
 
 - [ ] Tích hợp Cognito login/logout.
 - [ ] API từ chối request không có token hợp lệ.

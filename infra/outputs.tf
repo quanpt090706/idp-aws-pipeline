@@ -115,6 +115,21 @@ output "lambda_parse_arn" {
   value       = aws_lambda_function.parse.arn
 }
 
+output "lambda_notification_arn" {
+  description = "ARN của Lambda Notification"
+  value       = aws_lambda_function.notification.arn
+}
+
+output "workflow_role_arn" {
+  description = "Role được Step Functions sử dụng"
+  value       = local.workflow_role_arn
+}
+
+output "textract_role_arn" {
+  description = "Role được Textract sử dụng để publish SNS completion"
+  value       = local.textract_role_arn
+}
+
 # --- 6. Orchestration (Step Functions) ---
 output "step_functions_arn" {
   description = "ARN của Step Functions State Machine điều phối"
